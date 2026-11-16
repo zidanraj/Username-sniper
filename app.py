@@ -1,3 +1,4 @@
+
 import os
 import json
 import time
@@ -14,10 +15,14 @@ import eventlet
 eventlet.monkey_patch()
 
 app = Flask(__name__)
-app.secret_key = 'z3nith_K9x2Pv8Q4mR7wL3j_god'
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(32))
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
 
-CREDS = {'flashy': 'Zidan9610'}
+CREDS = {
+    os.environ.get('ADMIN_USERNAME', ''):
+    os.environ.get('ADMIN_PASSWORD', '')
+}
+
 DISCORD_BATCH = 'https://discord.com/api/v9/unique-username/batch-available'
 CHARS = string.ascii_lowercase + string.digits
 CHARS_EXTRA = CHARS + '_'
@@ -233,7 +238,7 @@ def index():
 @app.route('/api/login', methods=['POST'])
 def login():
     d = request.json or {}
-    if CREDS.get(d.get('u')) == d.get('p'):
+    if CREDS.get(d.get('u')) == d.get('p') and d.get('u'):
         session['ok'] = True
         return jsonify({'ok': True})
     return jsonify({'ok': False}), 401
