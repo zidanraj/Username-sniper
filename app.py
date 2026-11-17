@@ -7,11 +7,9 @@ from flask import Flask, render_template, request, jsonify, session, send_file
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'fallback_change_this')
 
-# ── CREDENTIALS FROM ENV ───────────────────────────────────────────────────────
 ADMIN_USER = os.environ.get('ADMIN_USERNAME', 'admin')
 ADMIN_PASS = os.environ.get('ADMIN_PASSWORD', 'changeme')
 
-# ── STATE ──────────────────────────────────────────────────────────────────────
 lock = threading.Lock()
 _pid = [0]
 _uid = [0]
@@ -24,18 +22,23 @@ state = {
     'webhook': '',
 }
 
+# ── EXACT SAME HEADERS AS WORKING BOT ─────────────────────────────────────────
 DISC_HDR = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    'Accept': 'application/json',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Origin': 'https://discord.com',
-    'Referer': 'https://discord.com/',
-    'X-Discord-Locale': 'en-US',
-    'X-Discord-Timezone': 'America/New_York',
-    'X-Super-Properties': 'eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiQ2hyb21lIiwiZGV2aWNlIjoiIiwic3lzdGVtX2xvY2FsZSI6ImVuLVVTIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzEzMS4wLjAuMCBTYWZhcmkvNTM3LjM2IiwiYnJvd3Nlcl92ZXJzaW9uIjoiMTMxLjAuMC4wIiwib3NfdmVyc2lvbiI6IjEwIiwicmVmZXJyZXIiOiIiLCJyZWZlcnJpbmdfZG9tYWluIjoiIiwicmVmZXJyZXJfY3VycmVudCI6IiIsInJlZmVycmluZ19kb21haW5fY3VycmVudCI6IiIsInJlbGVhc2VfY2hhbm5lbCI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjMzOTYyNiwiY2xpZW50X2V2ZW50X3NvdXJjZSI6bnVsbH0=',
+    'Content-Type': 'application/json',
+    'User-Agent': (
+        'Mozilla/5.0 (Linux; Android 14; SM-A146B) AppleWebKit/537.36 '
+        '(KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36'
+    ),
 }
 
-# ── HELPERS ────────────────────────────────────────────────────────────────────
+# ── WORKING ENDPOINT (unauthed — no token needed) ─────────────────────────────
+DISC_URL = 'https://discord.com/api/v9/unique-username/username-attempt-unauthed'
+
+VALID_CHARS = string.ascii_lowercase + string.digits
+VOWELS      = 'aeiou'
+CONSONANTS  = 'bcdfghjklmnpqrstvwxyz'
+
+# ── HELPERS ───────────────────────────────────────────────────────────────────
 def addlog(lvl, msg):
     with lock:
         state['logs'].append({
@@ -55,18 +58,35 @@ def authed(f):
 
 def gen_name(lengths):
     l = random.choice(lengths)
-    return ''.join(random.choices(string.ascii_lowercase + string.digits, k=l))
+    # 3 styles just like the working bot
+    style = random.choice(['pronounceable', 'alpha', 'alnum'])
+    if style == 'pronounceable':
+        return ''.join(
+            random.choice(CONSONANTS if i % 2 == 0 else VOWELS)
+            for i in range(l)
+        )
+    if style == 'alpha':
+        return ''.join(random.choices(string.ascii_lowercase, k=l))
+    return ''.join(random.choices(VALID_CHARS, k=l))
 
-def disc_check(username, proxy=None, token=None):
-    url = f'https://discord.com/api/v9/unique-username/validate?username={username}'
-    h = DISC_HDR.copy()
-    if token:
-        h['Authorization'] = token
+def disc_check(username, proxy=None):
+    """
+    POST to unauthed endpoint — 100% works without token.
+    Returns: 'valid' | 'invalid' | 'rl' | 'proxy_dead' | 'err'
+    """
     px = {'http': proxy, 'https': proxy} if proxy else None
     try:
-        r = requests.get(url, headers=h, proxies=px, timeout=14)
+        r = requests.post(
+            DISC_URL,
+            json={'username': username},
+            headers=DISC_HDR,
+            proxies=px,
+            timeout=14,
+        )
         if r.status_code == 200:
-            return 'valid' if not r.json().get('taken', True) else 'invalid'
+            data = r.json()
+            # taken=False means AVAILABLE
+            return 'valid' if data.get('taken') is False else 'invalid'
         if r.status_code == 429:
             return 'rl'
         return 'err'
@@ -80,14 +100,6 @@ def next_proxy():
         ok = [p for p in state['proxies'] if p['s'] == 'ok']
         return random.choice(ok)['ep'] if ok else None
 
-def next_token():
-    with lock:
-        if not state['tokens']:
-            return None
-        t = state['tokens'][0]
-        state['tokens'].append(state['tokens'].pop(0))
-        return t
-
 def fire_webhook(username, length):
     url = state['webhook']
     if not url:
@@ -100,8 +112,8 @@ def fire_webhook(username, length):
                 'description': '**Rare Username Discovered!**',
                 'color': 0x00ff88,
                 'fields': [
-                    {'name': '👤 Username', 'value': f'`{username}`', 'inline': True},
-                    {'name': '✅ Status',   'value': '**VALID**',     'inline': True},
+                    {'name': '👤 Username', 'value': f'`{username}`',  'inline': True},
+                    {'name': '✅ Status',   'value': '**VALID**',      'inline': True},
                     {'name': '🔢 Type',     'value': f'{length} Characters', 'inline': True},
                     {'name': '⏰ Found At', 'value': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC'), 'inline': False},
                 ],
@@ -112,17 +124,20 @@ def fire_webhook(username, length):
     except Exception:
         pass
 
-# ── WORKER ─────────────────────────────────────────────────────────────────────
+# ── WORKER ────────────────────────────────────────────────────────────────────
 def worker():
     addlog('info', '🚀 Sniper started')
     with lock:
         cfg = {**state['config']}
-        state['stats'] = {'gen': 0, 'checked': 0, 'valid': 0,
-                          'invalid': 0, 'rl': 0, 'err': 0}
+        state['stats'] = {
+            'gen': 0, 'checked': 0, 'valid': 0,
+            'invalid': 0, 'rl': 0, 'err': 0
+        }
 
     lengths = cfg['lengths']
     amount  = cfg['amount']
 
+    # generate unique pool
     seen = set()
     pool = []
     while len(pool) < amount:
@@ -143,14 +158,20 @@ def worker():
                 break
             has_px = any(p['s'] == 'ok' for p in state['proxies'])
 
-        batch_sz = 10 if has_px else 3
+        # proxies = 10 at a time, no proxy = 2 at a time (like working bot)
+        batch_sz = 10 if has_px else 2
         batch    = pool[idx:idx + batch_sz]
         idx     += batch_sz
 
         def check_one(u):
-            px = next_proxy()
-            tk = next_token()
-            return u, disc_check(u, proxy=px, token=tk), len(u), px
+            px  = next_proxy()
+            res = disc_check(u, proxy=px)
+            # double-check if valid (same as working bot)
+            if res == 'valid':
+                res2 = disc_check(u, proxy=next_proxy())
+                if res2 != 'valid':
+                    res = 'invalid'
+            return u, res, len(u), px
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=batch_sz) as ex:
             futs = {ex.submit(check_one, u): u for u in batch}
@@ -208,12 +229,9 @@ def worker():
                 break
             has_px_now = any(p['s'] == 'ok' for p in state['proxies'])
 
-        delay = 1 if has_px_now else 7
-        for _ in range(delay * 10):
-            with lock:
-                if state['stop']:
-                    break
-            time.sleep(0.1)
+        # delay between batches — like working bot (0.6s no proxy, 0.05s with proxy)
+        delay = 0.05 if has_px_now else 0.6
+        time.sleep(delay)
 
     with lock:
         state['running'] = False
@@ -222,11 +240,10 @@ def worker():
         c = state['stats']['checked']
     addlog('success', f'🏁 Done! {c} checked → {v} valid found')
 
-# ── ROUTES ─────────────────────────────────────────────────────────────────────
+# ── ROUTES ────────────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
-    page = 'app' if session.get('ok') else 'login'
-    return render_template('index.html', page=page)
+    return render_template('index.html', page='app' if session.get('ok') else 'login')
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -274,7 +291,7 @@ def api_check():
     u = (request.json or {}).get('username', '').strip().lower()
     if not u or len(u) < 2 or len(u) > 32:
         return jsonify({'r': 'invalid_format'})
-    r = disc_check(u, proxy=next_proxy(), token=next_token())
+    r = disc_check(u, proxy=next_proxy())
     addlog('info', f'🔍 Manual: {u} → {r}')
     return jsonify({'r': r, 'u': u})
 
@@ -292,7 +309,7 @@ def api_proxies_add():
     if not ep:
         return jsonify({'error': 'empty'}), 400
     if not any(ep.startswith(x) for x in ('socks5://', 'http://', 'https://')):
-        ep = 'socks5://' + ep
+        ep = 'http://' + ep
     with lock:
         pid = _pid[0]; _pid[0] += 1
         state['proxies'].append({'id': pid, 'ep': ep, 's': 'untested'})
@@ -308,7 +325,7 @@ def api_proxies_bulk():
         if not ln:
             continue
         if not any(ln.startswith(x) for x in ('socks5://', 'http://', 'https://')):
-            ln = 'socks5://' + ln
+            ln = 'http://' + ln
         with lock:
             pid = _pid[0]; _pid[0] += 1
             state['proxies'].append({'id': pid, 'ep': ln, 's': 'untested'})
@@ -324,12 +341,14 @@ def api_proxies_test():
             plist = list(state['proxies'])
         for p in plist:
             try:
-                r = requests.get(
-                    'https://discord.com/api/v9/gateway',
+                r = requests.post(
+                    DISC_URL,
+                    json={'username': 'testuser123'},
+                    headers=DISC_HDR,
                     proxies={'http': p['ep'], 'https': p['ep']},
                     timeout=10
                 )
-                s = 'ok' if r.status_code == 200 else 'dead'
+                s = 'ok' if r.status_code in (200, 429) else 'dead'
             except:
                 s = 'dead'
             with lock:
@@ -364,15 +383,12 @@ def api_proxies_clear():
         state['proxies'] = []
     return jsonify({'ok': True})
 
-# tokens
+# tokens (kept for compatibility but not needed anymore)
 @app.route('/api/tokens')
 @authed
 def api_tokens_get():
     with lock:
-        return jsonify({
-            'tokens': [t[:22] + '...' for t in state['tokens']],
-            'count': len(state['tokens'])
-        })
+        return jsonify({'tokens': [t[:22] + '...' for t in state['tokens']], 'count': len(state['tokens'])})
 
 @app.route('/api/tokens/add', methods=['POST'])
 @authed
