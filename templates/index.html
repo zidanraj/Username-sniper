@@ -1,1087 +1,740 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Z3NITH SNIPER GOD</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#000008;--bg2:#060614;--bg3:#0a0a1e;
-  --neon:#00ff88;--neon2:#00ffff;--pink:#ff0066;--purple:#bf00ff;
-  --txt:#d0d0e0;--txt2:#606080;--txt3:#404060;
-  --border:rgba(0,255,136,.12);--border2:rgba(0,255,255,.1);
-  --glass:rgba(0,255,136,.025);--glass2:rgba(255,255,255,.018);
-  --red:#ff3355;--yellow:#ffcc00;--orange:#ff6600;
-  --radius:12px;--radius-sm:8px;
-  --mono:'JetBrains Mono',monospace;
-  --sans:'Space Grotesk',sans-serif;
+  --bg:#050508;--s:rgba(0,255,136,.04);--b:rgba(0,255,136,.12);
+  --p:#00ff88;--a:#00d4ff;--danger:#ff4757;--warn:#ffa502;
+  --txt:#e2e8f0;--muted:#64748b;--nw:62px;--nh:52px;
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--sans);overflow:hidden}
-canvas#matrix{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;opacity:.6}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Share Tech Mono',monospace;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden;user-select:none}
+#bgc{position:fixed;inset:0;z-index:0;pointer-events:none}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:999}
 
-/* ─── LOGIN ──────────────────────────────────────────────────────────── */
-#login-screen{
-  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-  background:var(--bg);
-}
-.login-card{
-  position:relative;z-index:1;width:380px;padding:40px 36px;
-  background:rgba(6,6,20,.85);
-  border:1px solid var(--border);
-  border-radius:20px;
-  backdrop-filter:blur(20px);
-  box-shadow:0 0 60px rgba(0,255,136,.06),0 0 120px rgba(0,255,136,.03),inset 0 1px 0 rgba(255,255,255,.04);
-}
-.login-logo{
-  text-align:center;margin-bottom:28px;
-}
-.login-logo .title{
-  font-size:22px;font-weight:700;letter-spacing:3px;
-  background:linear-gradient(135deg,var(--neon),var(--neon2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  text-transform:uppercase;
-}
-.login-logo .sub{
-  font-size:11px;color:var(--txt2);letter-spacing:6px;text-transform:uppercase;margin-top:4px;
-  font-family:var(--mono);
-}
-.login-logo .icon{font-size:36px;display:block;margin-bottom:8px;filter:drop-shadow(0 0 12px var(--neon));}
-.field{margin-bottom:16px;}
-.field label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--txt2);margin-bottom:6px;font-family:var(--mono);}
-.field input{
-  width:100%;padding:11px 14px;background:rgba(255,255,255,.03);
-  border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-sm);
-  color:var(--txt);font-family:var(--mono);font-size:13px;outline:none;
-  transition:border-color .2s,box-shadow .2s;
-}
-.field input:focus{border-color:var(--neon);box-shadow:0 0 0 2px rgba(0,255,136,.1);}
-.btn-login{
-  width:100%;padding:13px;margin-top:8px;
-  background:linear-gradient(135deg,rgba(0,255,136,.15),rgba(0,255,255,.08));
-  border:1px solid var(--neon);border-radius:var(--radius-sm);
-  color:var(--neon);font-family:var(--sans);font-size:14px;font-weight:600;
-  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
-  transition:all .2s;position:relative;overflow:hidden;
-}
-.btn-login:hover{background:linear-gradient(135deg,rgba(0,255,136,.25),rgba(0,255,255,.15));box-shadow:0 0 20px rgba(0,255,136,.2);}
-.btn-login:active{transform:scale(.98);}
-#login-err{
-  margin-top:12px;text-align:center;font-size:12px;color:var(--red);
-  font-family:var(--mono);display:none;
-}
+/* LOGIN */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10}
+.lc{background:rgba(5,5,8,.93);border:1px solid var(--b);border-radius:18px;padding:50px 42px;width:420px;text-align:center;backdrop-filter:blur(24px);box-shadow:0 0 80px rgba(0,255,136,.06);position:relative;overflow:hidden}
+.lc::before{content:'';position:absolute;inset:0;border-radius:18px;background:linear-gradient(135deg,rgba(0,255,136,.18),transparent 50%,rgba(0,212,255,.14));z-index:-1}
+.lc::after{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(transparent,rgba(0,255,136,.05),transparent 30%);animation:spin 7s linear infinite;z-index:-1}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ll{font-family:'Orbitron',monospace;font-size:34px;font-weight:900;color:var(--p);text-shadow:0 0 25px var(--p),0 0 70px rgba(0,255,136,.4);letter-spacing:5px;margin-bottom:4px;animation:glitch 4s infinite}
+@keyframes glitch{0%,88%,100%{text-shadow:0 0 25px var(--p),0 0 70px rgba(0,255,136,.4);transform:none}90%{text-shadow:-3px 0 #ff004f,3px 0 var(--a);transform:translate(-1px)}92%{text-shadow:3px 0 #ff004f,-3px 0 var(--a);transform:translate(1px)}94%{text-shadow:0 0 25px var(--p);transform:none}}
+.ls{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:9px;color:var(--a);margin-bottom:6px}
+.lt{color:var(--muted);font-size:12px;margin-bottom:38px}
+.li{width:100%;background:rgba(0,255,136,.05);border:1px solid var(--b);border-radius:9px;padding:14px 16px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:14px;outline:none;margin-bottom:12px;transition:all .3s}
+.li:focus{border-color:var(--p);box-shadow:0 0 20px rgba(0,255,136,.12)}
+.lb{width:100%;background:linear-gradient(135deg,var(--p),#00cc6a);border:none;border-radius:9px;padding:15px;color:#000;font-family:'Orbitron',monospace;font-weight:700;font-size:13px;letter-spacing:2px;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;margin-top:4px}
+.lb::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);transform:translateX(-100%);transition:transform .5s}
+.lb:hover::before{transform:translateX(100%)}
+.lb:hover{box-shadow:0 0 35px rgba(0,255,136,.5);transform:translateY(-1px)}
+.lb:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.lerr{color:var(--danger);font-size:12px;margin-top:12px;min-height:20px}
 
-/* ─── APP ────────────────────────────────────────────────────────────── */
-#app{display:none;position:fixed;inset:0;z-index:10;}
-.app-bg{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 60% 60% at 15% 20%,rgba(0,255,136,.04) 0%,transparent 60%),
-    radial-gradient(ellipse 60% 60% at 85% 80%,rgba(0,255,255,.03) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 80% at 50% 50%,rgba(191,0,255,.02) 0%,transparent 70%),
-    var(--bg);
-}
-.layout{position:relative;z-index:1;display:flex;height:100%;flex-direction:column;}
+/* APP */
+#app{position:fixed;inset:0;display:none;z-index:5}
+#app.show{display:grid;grid-template-columns:var(--nw) 1fr;grid-template-rows:var(--nh) 1fr}
 
-/* ─── TOP BAR ──────────────────────────────────────────────────────── */
-.topbar{
-  display:flex;align-items:center;gap:16px;
-  padding:0 20px;height:52px;
-  background:rgba(6,6,20,.7);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(16px);flex-shrink:0;
-}
-.topbar .logo{
-  font-size:14px;font-weight:700;letter-spacing:2px;
-  background:linear-gradient(90deg,var(--neon),var(--neon2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-  white-space:nowrap;
-}
-.topbar .logo span{color:var(--pink);-webkit-text-fill-color:var(--pink);}
-.topbar-stats{display:flex;gap:12px;margin-left:auto;align-items:center;}
-.stat-pill{
-  display:flex;align-items:center;gap:5px;
-  padding:4px 10px;border-radius:20px;
-  background:rgba(255,255,255,.025);border:1px solid var(--border);
-  font-size:11px;font-family:var(--mono);
-}
-.stat-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--neon);}
-.stat-pill.red .dot{background:var(--red);}
-.stat-pill.cyan .dot{background:var(--neon2);}
-.stat-pill.purple .dot{background:var(--purple);}
-.running-ind{
-  display:flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);
-  color:var(--neon);opacity:0;transition:opacity .3s;
-}
-.running-ind.on{opacity:1;}
-.running-ind::before{
-  content:'';display:block;width:7px;height:7px;border-radius:50%;
-  background:var(--neon);box-shadow:0 0 8px var(--neon);
-  animation:pulse 1s ease infinite;
-}
-@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
-.btn-logout{
-  padding:5px 12px;border-radius:6px;background:rgba(255,0,102,.1);
-  border:1px solid rgba(255,0,102,.2);color:var(--pink);
-  font-size:11px;cursor:pointer;font-family:var(--mono);
-  transition:all .2s;
-}
-.btn-logout:hover{background:rgba(255,0,102,.2);}
+/* NAV */
+#nav{grid-row:1/3;background:rgba(5,5,8,.97);border-right:1px solid var(--b);display:flex;flex-direction:column;align-items:center;padding:14px 0;gap:4px;backdrop-filter:blur(20px)}
+.nlogo{font-size:22px;margin-bottom:14px;animation:npulse 2.5s ease-in-out infinite;filter:drop-shadow(0 0 8px var(--p))}
+@keyframes npulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12);filter:drop-shadow(0 0 18px var(--p))}}
+.nb{width:46px;height:46px;background:none;border:1px solid transparent;border-radius:10px;color:var(--muted);font-size:18px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;position:relative}
+.nb:hover{background:var(--s);border-color:var(--b);color:var(--p)}
+.nb.on{background:rgba(0,255,136,.12);border-color:rgba(0,255,136,.35);color:var(--p);box-shadow:0 0 16px rgba(0,255,136,.18)}
+.nb::before{content:attr(title);position:absolute;left:calc(100% + 14px);background:rgba(5,5,8,.97);border:1px solid var(--b);border-radius:7px;padding:6px 11px;font-family:'Share Tech Mono',monospace;font-size:11px;white-space:nowrap;pointer-events:none;opacity:0;transform:translateX(-6px);transition:all .2s;z-index:200}
+.nb:hover::before{opacity:1;transform:translateX(0)}
+.nsp{flex:1}
+.nb.logout:hover{color:var(--danger);border-color:var(--danger)}
 
-/* ─── MAIN CONTENT ─────────────────────────────────────────────────── */
-.main{display:flex;flex:1;overflow:hidden;}
+/* HEADER */
+#hdr{background:rgba(5,5,8,.97);border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;padding:0 24px;backdrop-filter:blur(20px)}
+.htitle{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--p);letter-spacing:3px;text-shadow:0 0 12px rgba(0,255,136,.5)}
+#spill{padding:4px 14px;border-radius:20px;font-size:11px;letter-spacing:1px;border:1px solid var(--muted);color:var(--muted);transition:all .3s}
+#spill.run{background:rgba(0,255,136,.1);border-color:var(--p);color:var(--p);animation:spillpulse 1.2s ease-in-out infinite}
+@keyframes spillpulse{0%,100%{box-shadow:0 0 8px rgba(0,255,136,.3)}50%{box-shadow:0 0 22px rgba(0,255,136,.6)}}
 
-/* ─── SIDEBAR ───────────────────────────────────────────────────────── */
-.sidebar{
-  width:200px;flex-shrink:0;
-  background:rgba(6,6,20,.5);
-  border-right:1px solid var(--border);
-  padding:16px 0;
-  display:flex;flex-direction:column;gap:4px;
-  overflow-y:auto;
-}
-.nav-item{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 18px;cursor:pointer;
-  font-size:13px;font-weight:500;color:var(--txt2);
-  border-left:2px solid transparent;
-  transition:all .15s;user-select:none;
-}
-.nav-item .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0;}
-.nav-item:hover{color:var(--txt);background:rgba(255,255,255,.025);}
-.nav-item.active{
-  color:var(--neon);border-left-color:var(--neon);
-  background:rgba(0,255,136,.05);
-}
-.sidebar-sep{height:1px;background:var(--border);margin:8px 16px;}
+/* CONTENT */
+#ct{overflow-y:auto;padding:24px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--b) transparent}
+#ct::-webkit-scrollbar{width:4px}
+#ct::-webkit-scrollbar-thumb{background:var(--b);border-radius:2px}
+.pg{display:none}
+.pg.on{display:block;animation:fin .3s ease}
+@keyframes fin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.ph{font-family:'Orbitron',monospace;font-size:17px;font-weight:700;color:var(--p);margin-bottom:22px;text-shadow:0 0 14px rgba(0,255,136,.3);border-bottom:1px solid var(--b);padding-bottom:12px}
 
-/* ─── CONTENT AREA ──────────────────────────────────────────────────── */
-.content{flex:1;overflow-y:auto;padding:24px;}
-.tab-pane{display:none;}
-.tab-pane.active{display:block;}
+/* CARDS */
+.card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border .3s}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--p),transparent);opacity:.5}
+.card:hover{border-color:rgba(0,255,136,.22)}
+.ct2{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--a);text-transform:uppercase;margin-bottom:14px}
+.mt10{margin-top:10px}.mt20{margin-top:20px}
 
-/* ─── CARDS ─────────────────────────────────────────────────────────── */
-.card{
-  background:var(--glass2);border:1px solid var(--border);
-  border-radius:var(--radius);padding:20px;margin-bottom:16px;
-  transition:border-color .2s,box-shadow .2s;
-}
-.card:hover{border-color:rgba(0,255,136,.2);}
-.card-title{
-  font-size:12px;text-transform:uppercase;letter-spacing:2px;
-  color:var(--neon);font-family:var(--mono);font-weight:500;
-  margin-bottom:14px;display:flex;align-items:center;gap:8px;
-}
-.card-title::before{content:'';display:block;width:3px;height:14px;background:var(--neon);border-radius:2px;}
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.sc{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;text-align:center;transition:all .3s}
+.sc.p{border-color:rgba(0,255,136,.3)}.sc.d{border-color:rgba(255,71,87,.3)}.sc.w{border-color:rgba(255,165,2,.3)}
+.sl{font-size:10px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.sv{font-family:'Orbitron',monospace;font-size:30px;font-weight:700;color:var(--p);text-shadow:0 0 10px rgba(0,255,136,.4);transition:transform .15s}
+.sc.d .sv{color:var(--danger);text-shadow:0 0 10px rgba(255,71,87,.4)}
+.sc.w .sv{color:var(--warn);text-shadow:0 0 10px rgba(255,165,2,.4)}
+.sgsm{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.scsm{background:var(--s);border:1px solid var(--b);border-radius:8px;padding:12px;text-align:center;display:flex;flex-direction:column;gap:4px}
+.scsm.p{border-color:rgba(0,255,136,.3)}.scsm.d{border-color:rgba(255,71,87,.3)}.scsm.w{border-color:rgba(255,165,2,.3)}
+.scsm span:first-child{font-family:'Orbitron',monospace;font-size:22px;color:var(--p)}
+.scsm.d span:first-child{color:var(--danger)}.scsm.w span:first-child{color:var(--warn)}
+.scsm span:last-child{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
 
-/* ─── FORM ELEMENTS ─────────────────────────────────────────────────── */
-input[type=text],input[type=password],input[type=number],textarea,select{
-  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);
-  border-radius:var(--radius-sm);color:var(--txt);font-family:var(--mono);
-  font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s;
-}
-input[type=text]:focus,input[type=password]:focus,input[type=number]:focus,
-textarea:focus{border-color:var(--neon);box-shadow:0 0 0 2px rgba(0,255,136,.08);}
-input[type=text],input[type=password],input[type=number]{padding:9px 12px;width:100%;}
-textarea{padding:10px 12px;width:100%;resize:vertical;min-height:80px;}
+/* INPUTS */
+input[type=text],input[type=password],input[type=number],textarea{background:rgba(0,0,0,.35);border:1px solid var(--b);border-radius:8px;padding:10px 14px;color:var(--txt);font-family:'Share Tech Mono',monospace;font-size:13px;outline:none;transition:all .3s;width:100%}
+input:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 16px rgba(0,255,136,.1)}
+input[type=range]{-webkit-appearance:none;height:4px;background:var(--b);border-radius:2px;outline:none;flex:1;border:none;padding:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--p);border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5)}
+textarea{resize:vertical;min-height:90px}
+.ir{display:flex;gap:10px}
+.sr{display:flex;align-items:center;gap:12px}
+.sr input[type=number]{width:72px;flex-shrink:0;text-align:center}
 
-/* ─── BUTTONS ───────────────────────────────────────────────────────── */
-.btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:9px 18px;border-radius:var(--radius-sm);
-  font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;
-  border:1px solid;transition:all .2s;user-select:none;white-space:nowrap;
-}
-.btn:active{transform:scale(.97);}
-.btn-neon{
-  background:rgba(0,255,136,.1);border-color:rgba(0,255,136,.4);color:var(--neon);
-}
-.btn-neon:hover{background:rgba(0,255,136,.2);box-shadow:0 0 16px rgba(0,255,136,.15);}
-.btn-neon:disabled{opacity:.35;cursor:not-allowed;transform:none;}
-.btn-cyan{background:rgba(0,255,255,.08);border-color:rgba(0,255,255,.3);color:var(--neon2);}
-.btn-cyan:hover{background:rgba(0,255,255,.15);}
-.btn-red{background:rgba(255,0,102,.08);border-color:rgba(255,0,102,.3);color:var(--pink);}
-.btn-red:hover{background:rgba(255,0,102,.15);}
-.btn-purple{background:rgba(191,0,255,.08);border-color:rgba(191,0,255,.3);color:var(--purple);}
-.btn-purple:hover{background:rgba(191,0,255,.15);}
-.btn-sm{padding:5px 12px;font-size:11px;}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+/* BUTTONS */
+.btn{background:none;border:1px solid;border-radius:8px;padding:10px 18px;font-family:'Share Tech Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+.bp{border-color:var(--p);color:var(--p)}.bp:hover{background:rgba(0,255,136,.1);box-shadow:0 0 16px rgba(0,255,136,.18)}
+.bd{border-color:var(--danger);color:var(--danger)}.bd:hover{background:rgba(255,71,87,.09)}
+.bs{border-color:var(--a);color:var(--a)}.bs:hover{background:rgba(0,212,255,.09)}
+.bw{border-color:var(--warn);color:var(--warn)}.bw:hover{background:rgba(255,165,2,.09)}
+.btn.sm{padding:7px 12px;font-size:11px}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+.br{display:flex;gap:10px;flex-wrap:wrap}
+.fr{margin-bottom:16px}
+.fr label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.cbg{display:flex;gap:20px}
+.cbl{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--txt)}
+.cbl input[type=checkbox]{accent-color:var(--p);width:16px;height:16px}
 
-/* ─── CHECKBOXES (length selector) ─────────────────────────────────── */
-.length-selector{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;}
-.len-opt{
-  display:flex;align-items:center;gap:7px;
-  padding:8px 14px;border-radius:var(--radius-sm);
-  border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.025);
-  cursor:pointer;font-size:13px;transition:all .2s;user-select:none;
-}
-.len-opt input{display:none;}
-.len-opt .box{
-  width:14px;height:14px;border-radius:3px;border:1.5px solid var(--txt3);
-  display:flex;align-items:center;justify-content:center;font-size:10px;
-  transition:all .15s;flex-shrink:0;
-}
-.len-opt.checked{border-color:var(--neon);background:rgba(0,255,136,.06);}
-.len-opt.checked .box{background:var(--neon);border-color:var(--neon);color:#000;}
+/* PROGRESS */
+.pbw{background:rgba(0,0,0,.35);border:1px solid var(--b);border-radius:20px;height:8px;overflow:hidden;margin-bottom:8px}
+.pbb{height:100%;background:linear-gradient(90deg,var(--p),var(--a));border-radius:20px;width:0%;transition:width .6s ease;position:relative;overflow:hidden}
+.pbb::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shim 1.5s infinite}
+@keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.pt{font-size:11px;color:var(--muted);text-align:center}
 
-/* ─── SLIDER ────────────────────────────────────────────────────────── */
-.range-row{display:flex;align-items:center;gap:12px;margin:12px 0;}
-.range-row input[type=range]{
-  flex:1;-webkit-appearance:none;height:4px;
-  background:linear-gradient(to right,var(--neon) 0%,var(--neon) 50%,rgba(255,255,255,.1) 50%);
-  border-radius:4px;outline:none;cursor:pointer;border:none;
-}
-.range-row input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;width:16px;height:16px;border-radius:50%;
-  background:var(--neon);box-shadow:0 0 8px rgba(0,255,136,.4);cursor:pointer;
-}
-.range-val{
-  min-width:40px;text-align:center;
-  font-size:18px;font-weight:700;color:var(--neon);font-family:var(--mono);
-}
+/* CHECKER */
+.cr{margin-top:16px;padding:14px;border-radius:8px;font-size:14px;text-align:center;display:none}
+.cr.valid{display:block;background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.3);color:var(--p)}
+.cr.invalid{display:block;background:rgba(255,71,87,.07);border:1px solid rgba(255,71,87,.3);color:var(--danger)}
+.cr.rl{display:block;background:rgba(255,165,2,.07);border:1px solid rgba(255,165,2,.3);color:var(--warn)}
 
-/* ─── PROGRESS BAR ──────────────────────────────────────────────────── */
-.progress-wrap{
-  margin:14px 0;height:6px;background:rgba(255,255,255,.05);
-  border-radius:4px;overflow:hidden;
-}
-.progress-bar{
-  height:100%;border-radius:4px;width:0%;
-  background:linear-gradient(90deg,var(--neon),var(--neon2));
-  transition:width .3s ease;box-shadow:0 0 10px rgba(0,255,136,.4);
-}
-.progress-label{
-  display:flex;justify-content:space-between;
-  font-size:11px;font-family:var(--mono);color:var(--txt2);margin-top:5px;
-}
-.stat-row{
-  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px;
-}
-.stat-box{
-  padding:12px;background:rgba(255,255,255,.02);border:1px solid var(--border);
-  border-radius:var(--radius-sm);text-align:center;
-}
-.stat-box .n{font-size:22px;font-weight:700;color:var(--neon);font-family:var(--mono);}
-.stat-box .l{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
-.stat-box.pink .n{color:var(--pink);}
-.stat-box.cyan .n{color:var(--neon2);}
-.stat-box.grey .n{color:var(--txt);}
+/* PROXY */
+.pxl{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.pxi{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid var(--b);border-radius:8px;font-size:12px;gap:10px}
+.pxep{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted)}
+.pxs{padding:2px 10px;border-radius:4px;font-size:10px;letter-spacing:1px;flex-shrink:0}
+.pxs.ok{background:rgba(0,255,136,.14);color:var(--p)}
+.pxs.dead{background:rgba(255,71,87,.14);color:var(--danger)}
+.pxs.untested{background:rgba(100,116,139,.14);color:var(--muted)}
+.pdel{background:none;border:1px solid rgba(255,71,87,.3);border-radius:4px;padding:2px 8px;color:var(--danger);font-size:11px;cursor:pointer;flex-shrink:0;transition:all .2s;font-family:'Share Tech Mono',monospace}
+.pdel:hover{background:rgba(255,71,87,.1)}
+.ib{background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--a)}
+#tkl{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+.tki{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,.3);border:1px solid var(--b);border-radius:8px}
+.tkv{flex:1;color:var(--muted);font-size:11px}
 
-/* ─── CHECKER ───────────────────────────────────────────────────────── */
-.check-row{display:flex;gap:8px;align-items:flex-end;}
-.check-row input{flex:1;}
-.check-result{
-  margin-top:12px;padding:12px 16px;border-radius:var(--radius-sm);
-  font-family:var(--mono);font-size:13px;display:none;
-  align-items:center;gap:10px;
-}
-.check-result.valid{background:rgba(0,255,136,.06);border:1px solid rgba(0,255,136,.2);color:var(--neon);}
-.check-result.taken{background:rgba(255,0,102,.06);border:1px solid rgba(255,0,102,.2);color:var(--pink);}
-.check-result.error{background:rgba(255,100,0,.06);border:1px solid rgba(255,100,0,.2);color:var(--orange);}
+/* RESULTS */
+.rh{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.fg{display:flex;gap:8px}
+.fb{background:none;border:1px solid var(--b);border-radius:20px;padding:6px 16px;color:var(--muted);font-family:'Share Tech Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s}
+.fb.on{border-color:var(--p);color:var(--p);background:rgba(0,255,136,.07)}
+.rac{display:flex;gap:8px}
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.rcard{background:rgba(0,255,136,.04);border:1px solid rgba(0,255,136,.14);border-radius:10px;padding:16px;transition:all .3s}
+.rcard:hover{border-color:rgba(0,255,136,.4);transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,255,136,.1)}
+.ru{font-family:'Orbitron',monospace;font-size:16px;color:var(--p);margin-bottom:8px;word-break:break-all}
+.rm{font-size:11px;color:var(--muted);margin-bottom:12px}
+.rar{display:flex;gap:6px}
 
-/* ─── PROXY LIST ────────────────────────────────────────────────────── */
-.proxy-list{margin-top:12px;max-height:300px;overflow-y:auto;}
-.proxy-item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:7px 10px;border-radius:6px;font-size:12px;font-family:var(--mono);
-  color:var(--txt2);border:1px solid transparent;
-  transition:all .15s;
-}
-.proxy-item:hover{background:rgba(255,255,255,.025);border-color:var(--border);color:var(--txt);}
-.proxy-item .ep{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.proxy-item .del-proxy{
-  background:none;border:none;color:var(--txt3);cursor:pointer;
-  font-size:14px;padding:2px 6px;border-radius:4px;transition:color .15s;
-}
-.proxy-item .del-proxy:hover{color:var(--pink);}
-.proxy-count-badge{
-  display:inline-flex;padding:3px 10px;border-radius:12px;
-  background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);
-  color:var(--neon);font-size:11px;font-family:var(--mono);
-}
+/* WEBHOOK PREVIEW */
+.wp{background:rgba(0,0,0,.55);border-radius:8px;padding:16px;border-left:4px solid var(--p)}
+.wph{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.wpav{width:36px;height:36px;background:rgba(0,255,136,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
+.wpn{font-weight:700;color:#fff;font-size:14px}
+.wpbot{background:#5865f2;color:#fff;font-size:10px;padding:1px 5px;border-radius:3px;font-family:Arial;margin-left:5px}
+.wpe{background:rgba(0,255,136,.05);border:1px solid rgba(0,255,136,.14);border-left:3px solid var(--p);border-radius:4px;padding:14px}
+.wpet{font-weight:700;color:var(--p);font-size:14px;margin-bottom:4px}
+.wped{font-size:13px;margin-bottom:10px}
+.wpfs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+.wpf.full{grid-column:1/-1}
+.wpfn{font-size:10px;color:var(--muted);letter-spacing:1px;margin-bottom:2px}
+.wpfv{font-size:13px}
+.wpft{font-size:10px;color:var(--muted);border-top:1px solid var(--b);padding-top:8px}
 
-/* ─── RESULTS ───────────────────────────────────────────────────────── */
-.sub-tabs{display:flex;gap:0;margin-bottom:16px;border-bottom:1px solid var(--border);}
-.sub-tab{
-  padding:8px 20px;font-size:12px;font-weight:600;text-transform:uppercase;
-  letter-spacing:1px;cursor:pointer;color:var(--txt2);border-bottom:2px solid transparent;
-  transition:all .15s;
-}
-.sub-tab.active{color:var(--neon);border-bottom-color:var(--neon);}
-.sub-pane{display:none;}
-.sub-pane.active{display:block;}
-.username-list{display:flex;flex-direction:column;gap:4px;max-height:400px;overflow-y:auto;}
-.u-item{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 12px;border-radius:6px;
-  background:rgba(255,255,255,.02);border:1px solid var(--border);
-  transition:all .15s;
-}
-.u-item:hover{border-color:rgba(0,255,136,.2);background:rgba(0,255,136,.03);}
-.u-item .uname{
-  flex:1;font-family:var(--mono);font-size:13px;font-weight:500;color:var(--txt);
-  cursor:pointer;
-}
-.u-item .uname:hover{color:var(--neon);}
-.u-item .len-badge{
-  padding:2px 7px;border-radius:10px;font-size:10px;font-family:var(--mono);
-  background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.2);color:var(--neon);
-}
-.u-item .copy-btn,.u-item .del-btn{
-  background:none;border:none;cursor:pointer;font-size:13px;
-  padding:3px 6px;border-radius:4px;transition:opacity .15s;opacity:.4;
-}
-.u-item:hover .copy-btn,.u-item:hover .del-btn{opacity:1;}
-.u-item .copy-btn:hover{color:var(--neon2);}
-.u-item .del-btn:hover{color:var(--pink);}
-.empty-state{
-  padding:40px;text-align:center;color:var(--txt3);
-  font-size:13px;font-family:var(--mono);
-}
-.empty-state .e-icon{font-size:32px;margin-bottom:8px;opacity:.4;}
+/* LOGS */
+.lhdr{display:flex;justify-content:flex-end;margin-bottom:12px}
+.lw{background:rgba(0,0,0,.55);border:1px solid var(--b);border-radius:8px;height:calc(100vh - 220px);overflow-y:auto;padding:12px;scrollbar-width:thin;scrollbar-color:var(--b) transparent}
+.le2{display:flex;gap:10px;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025)}
+.lt2{color:var(--muted);flex-shrink:0}
+.le2.info .lm{color:var(--muted)}
+.le2.success .lm{color:var(--p)}
+.le2.warn .lm{color:var(--warn)}
+.le2.error .lm{color:var(--danger)}
+.badge{background:rgba(0,212,255,.14);border:1px solid rgba(0,212,255,.3);color:var(--a);font-family:'Share Tech Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;letter-spacing:1px;margin-left:10px}
 
-/* ─── LOGS ──────────────────────────────────────────────────────────── */
-.log-wrap{
-  background:#000;border:1px solid rgba(255,255,255,.06);
-  border-radius:var(--radius);padding:12px;
-  height:calc(100vh - 200px);overflow-y:auto;
-  font-family:var(--mono);font-size:12px;
-}
-.log-entry{display:flex;gap:10px;padding:2px 0;line-height:1.5;}
-.log-ts{color:var(--txt3);flex-shrink:0;width:52px;}
-.log-msg{flex:1;}
-.log-entry.success .log-msg{color:#00ff88;}
-.log-entry.error .log-msg{color:var(--red);}
-.log-entry.warn .log-msg{color:var(--yellow);}
-.log-entry.info .log-msg{color:#8888aa;}
-
-/* ─── SETTINGS ──────────────────────────────────────────────────────── */
-.settings-row{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
-.settings-row label{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--txt2);font-family:var(--mono);}
-.settings-row .hint{font-size:11px;color:var(--txt3);font-family:var(--mono);margin-top:3px;}
-.token-status{
-  display:inline-flex;align-items:center;gap:5px;
-  padding:3px 10px;border-radius:12px;font-size:11px;font-family:var(--mono);
-  background:rgba(255,0,102,.08);border:1px solid rgba(255,0,102,.2);color:var(--pink);
-  margin-top:6px;
-}
-.token-status.set{background:rgba(0,255,136,.08);border-color:rgba(0,255,136,.2);color:var(--neon);}
-
-/* ─── TOAST ─────────────────────────────────────────────────────────── */
-#toast{
-  position:fixed;bottom:24px;right:24px;z-index:9999;
-  padding:10px 18px;border-radius:var(--radius-sm);
-  font-size:13px;font-family:var(--mono);font-weight:500;
-  opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none;
-  max-width:280px;
-}
-#toast.show{opacity:1;transform:translateY(0);}
-#toast.ok{background:rgba(0,20,10,.9);border:1px solid var(--neon);color:var(--neon);}
-#toast.err{background:rgba(20,0,10,.9);border:1px solid var(--pink);color:var(--pink);}
-#toast.warn{background:rgba(20,15,0,.9);border:1px solid var(--yellow);color:var(--yellow);}
-
-/* ─── RATE LIMIT BANNER ─────────────────────────────────────────────── */
-#rate-banner{
-  position:fixed;top:60px;left:50%;transform:translateX(-50%);
-  z-index:999;padding:8px 20px;border-radius:20px;
-  background:rgba(20,12,0,.9);border:1px solid var(--yellow);
-  color:var(--yellow);font-size:12px;font-family:var(--mono);
-  display:none;align-items:center;gap:8px;
-  box-shadow:0 0 20px rgba(255,204,0,.15);
-}
-#rate-banner.show{display:flex;}
-
-/* ─── SCROLLBAR ─────────────────────────────────────────────────────── */
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px;}
-::-webkit-scrollbar-thumb:hover{background:rgba(0,255,136,.3);}
-
-/* ─── ANIMATE IN ─────────────────────────────────────────────────────── */
-@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-.card{animation:fadeUp .3s ease both;}
-
-/* ─── NEON GLOW INPUT ────────────────────────────────────────────────── */
-.glow-input{
-  background:rgba(0,255,136,.03);
-  border:1px solid rgba(0,255,136,.15) !important;
-}
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;gap:8px}
+.ti{background:rgba(5,5,8,.97);border:1px solid var(--b);border-radius:8px;padding:12px 16px;font-size:13px;backdrop-filter:blur(20px);animation:tin .3s ease;max-width:300px}
+@keyframes tin{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.ti.success{border-color:rgba(0,255,136,.4);color:var(--p)}
+.ti.error{border-color:rgba(255,71,87,.4);color:var(--danger)}
+.ti.info{border-color:rgba(0,212,255,.4);color:var(--a)}
+.empty{text-align:center;padding:36px;color:var(--muted);font-size:13px}
 </style>
 </head>
-<body>
+<body data-page="{{ page }}">
+<canvas id="bgc"></canvas>
 
-<!-- matrix rain canvas -->
-<canvas id="matrix"></canvas>
-
-<!-- ─── LOGIN ──────────────────────────────────────────────────────────── -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">
-      <span class="icon">🎯</span>
-      <div class="title">Z3NITH</div>
-      <div class="sub">Sniper God &nbsp;·&nbsp; Discord</div>
-    </div>
-    <div class="field">
-      <label>Username</label>
-      <input type="text" id="l-user" placeholder="enter username" autocomplete="off"/>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="l-pass" placeholder="••••••••"/>
-    </div>
-    <button class="btn-login" onclick="doLogin()">ACCESS SYSTEM</button>
-    <div id="login-err">⚠ Invalid credentials</div>
+<!-- LOGIN -->
+<div id="login">
+  <div class="lc">
+    <div class="ll">Z3NITH</div>
+    <div class="ls">SNIPER GOD</div>
+    <div class="lt">🎯 Discord Username Sniper Panel</div>
+    <input class="li" id="lu" type="text" placeholder="Username" autocomplete="off">
+    <input class="li" id="lp" type="password" placeholder="Password" autocomplete="off">
+    <button class="lb" id="lbtn" onclick="doLogin()">▶ ACCESS SYSTEM</button>
+    <div class="lerr" id="lerr"></div>
   </div>
 </div>
 
-<!-- ─── APP ────────────────────────────────────────────────────────────── -->
+<!-- APP -->
 <div id="app">
-  <div class="app-bg"></div>
-  <div class="layout">
+  <nav id="nav">
+    <div class="nlogo">🎯</div>
+    <button class="nb on" data-p="dash" title="Dashboard" onclick="go('dash')">🏠</button>
+    <button class="nb" data-p="gen"  title="Generator"  onclick="go('gen')">🎯</button>
+    <button class="nb" data-p="chk"  title="Checker"    onclick="go('chk')">🔍</button>
+    <button class="nb" data-p="prx"  title="Proxies"    onclick="go('prx')">🌐</button>
+    <button class="nb" data-p="tok"  title="Tokens"     onclick="go('tok')">🔑</button>
+    <button class="nb" data-p="res"  title="Results"    onclick="go('res')">✅</button>
+    <button class="nb" data-p="wh"   title="Webhook"    onclick="go('wh')">🪝</button>
+    <button class="nb" data-p="log"  title="Logs"       onclick="go('log')">📋</button>
+    <div class="nsp"></div>
+    <button class="nb logout" title="Logout" onclick="doLogout()">🚪</button>
+  </nav>
 
-    <!-- top bar -->
-    <div class="topbar">
-      <div class="logo">Z3<span>N</span>ITH <span>⚡</span> SNIPER GOD</div>
-      <div class="running-ind" id="run-ind">SNIPING</div>
-      <div class="topbar-stats">
-        <div class="stat-pill"><div class="dot"></div><span id="tb-valid">0</span> valid</div>
-        <div class="stat-pill cyan"><div class="dot"></div><span id="tb-proxies">0</span> proxies</div>
-        <button class="btn-logout" onclick="doLogout()">↩ EXIT</button>
+  <div id="hdr">
+    <div class="htitle">Z3NITH SNIPER GOD</div>
+    <div id="spill">● IDLE</div>
+  </div>
+
+  <div id="ct">
+
+    <!-- DASHBOARD -->
+    <section class="pg on" id="p-dash">
+      <div class="ph">Dashboard</div>
+      <div class="sg">
+        <div class="sc">  <div class="sl">Generated</div>  <div class="sv" id="s-gen">0</div></div>
+        <div class="sc">  <div class="sl">Checked</div>    <div class="sv" id="s-chk">0</div></div>
+        <div class="sc p"><div class="sl">Valid</div>       <div class="sv" id="s-val">0</div></div>
+        <div class="sc">  <div class="sl">Invalid</div>    <div class="sv" id="s-inv">0</div></div>
+        <div class="sc w"><div class="sl">Rate Limited</div><div class="sv" id="s-rl">0</div></div>
+        <div class="sc d"><div class="sl">Errors</div>     <div class="sv" id="s-err">0</div></div>
       </div>
-    </div>
+      <div class="card">
+        <div class="ct2">System Status</div>
+        <div id="dstat" style="color:var(--muted);font-size:13px;">System idle — configure the generator and start sniping.</div>
+      </div>
+    </section>
 
-    <!-- main -->
-    <div class="main">
-      <!-- sidebar -->
-      <nav class="sidebar">
-        <div class="nav-item active" data-nav="sniper">
-          <span class="icon">🎯</span>Sniper
-        </div>
-        <div class="nav-item" data-nav="checker">
-          <span class="icon">🔍</span>Checker
-        </div>
-        <div class="nav-item" data-nav="proxies">
-          <span class="icon">🌐</span>Proxies
-        </div>
-        <div class="nav-item" data-nav="results">
-          <span class="icon">📋</span>Results
-        </div>
-        <div class="sidebar-sep"></div>
-        <div class="nav-item" data-nav="logs">
-          <span class="icon">🖥</span>Logs
-        </div>
-        <div class="nav-item" data-nav="settings">
-          <span class="icon">⚙</span>Settings
-        </div>
-      </nav>
-
-      <!-- content -->
-      <div class="content">
-
-        <!-- ─── SNIPER ────────────────────────────────────────────── -->
-        <div class="tab-pane active" id="pane-sniper">
-
-          <div class="card">
-            <div class="card-title">Username Length</div>
-            <div class="length-selector">
-              <label class="len-opt checked" id="opt4">
-                <input type="checkbox" value="4" checked/>
-                <span class="box">✓</span>
-                <span>4 chars</span>
-              </label>
-              <label class="len-opt checked" id="opt5">
-                <input type="checkbox" value="5" checked/>
-                <span class="box">✓</span>
-                <span>5 chars</span>
-              </label>
-              <label class="len-opt" id="opt6">
-                <input type="checkbox" value="6"/>
-                <span class="box"></span>
-                <span>6 chars</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Generate Count <span style="color:var(--txt2);font-weight:400;font-size:10px;margin-left:4px">(max 60)</span></div>
-            <div class="range-row">
-              <input type="range" id="count-range" min="1" max="60" value="30" oninput="syncCount(this.value)"/>
-              <div class="range-val" id="count-disp">30</div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-title">Control</div>
-            <div class="btn-row">
-              <button class="btn btn-neon" id="btn-start" onclick="startSnipe()">▶ START SNIPE</button>
-              <button class="btn btn-red" id="btn-stop" onclick="stopSnipe()" disabled>⬛ STOP</button>
-            </div>
-            <div class="progress-wrap" style="margin-top:16px">
-              <div class="progress-bar" id="prog-bar"></div>
-            </div>
-            <div class="progress-label">
-              <span id="prog-txt">Ready</span>
-              <span id="prog-pct">0%</span>
-            </div>
-            <div class="stat-row">
-              <div class="stat-box grey"><div class="n" id="st-total">0</div><div class="l">Total</div></div>
-              <div class="stat-box grey"><div class="n" id="st-checked">0</div><div class="l">Checked</div></div>
-              <div class="stat-box"><div class="n" id="st-valid">0</div><div class="l">Valid</div></div>
-              <div class="stat-box pink"><div class="n" id="st-invalid">0</div><div class="l">Taken</div></div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ─── CHECKER ───────────────────────────────────────────── -->
-        <div class="tab-pane" id="pane-checker">
-          <div class="card">
-            <div class="card-title">Single Username Check</div>
-            <div class="check-row">
-              <input type="text" id="check-input" placeholder="username to check..." class="glow-input"
-                     onkeydown="if(event.key==='Enter')checkOne()"/>
-              <button class="btn btn-neon" onclick="checkOne()">🔍 CHECK</button>
-            </div>
-            <div class="check-result" id="check-result"></div>
-          </div>
-          <div class="card">
-            <div class="card-title">Bulk Check</div>
-            <textarea id="bulk-check-input" placeholder="One username per line&#10;username1&#10;username2&#10;username3" style="min-height:120px;" class="glow-input"></textarea>
-            <div class="btn-row">
-              <button class="btn btn-neon" onclick="checkBulk()">🔍 CHECK ALL</button>
-              <button class="btn btn-red btn-sm" onclick="document.getElementById('bulk-check-input').value=''">✕ CLEAR</button>
-            </div>
-            <div id="bulk-results" style="margin-top:12px;"></div>
+    <!-- GENERATOR -->
+    <section class="pg" id="p-gen">
+      <div class="ph">Username Generator</div>
+      <div class="card">
+        <div class="ct2">Configuration</div>
+        <div class="fr">
+          <label>Username Lengths</label>
+          <div class="cbg">
+            <label class="cbl"><input type="checkbox" id="cb4" checked> 4 Characters</label>
+            <label class="cbl"><input type="checkbox" id="cb5"> 5 Characters</label>
+            <label class="cbl"><input type="checkbox" id="cb6"> 6 Characters</label>
           </div>
         </div>
-
-        <!-- ─── PROXIES ───────────────────────────────────────────── -->
-        <div class="tab-pane" id="pane-proxies">
-          <div class="card">
-            <div class="card-title">Add Single Proxy</div>
-            <div style="display:flex;gap:8px;">
-              <input type="text" id="proxy-single" placeholder="host:port  or  user:pass@host:port  or  socks5://host:port" class="glow-input"/>
-              <button class="btn btn-neon" onclick="addSingleProxy()" style="flex-shrink:0">+ ADD</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Bulk Import</div>
-            <textarea id="proxy-bulk" placeholder="One proxy per line&#10;1.2.3.4:1080&#10;user:pass@5.6.7.8:8080&#10;socks5://host:1080" class="glow-input"></textarea>
-            <div class="btn-row">
-              <button class="btn btn-neon" onclick="addBulkProxies()">📥 IMPORT</button>
-              <button class="btn btn-red" onclick="deleteAllProxies()">🗑 DELETE ALL</button>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">
-              Proxy List &nbsp;
-              <span class="proxy-count-badge" id="proxy-count-badge">0 proxies</span>
-            </div>
-            <div class="proxy-list" id="proxy-list"></div>
+        <div class="fr">
+          <label>Amount <span style="color:var(--muted)">(max 60)</span></label>
+          <div class="sr">
+            <input type="range" id="amts" min="1" max="60" value="60" oninput="syncA(this)">
+            <input type="number" id="amtn" min="1" max="60" value="60" oninput="syncAN(this)">
           </div>
         </div>
+        <div class="br">
+          <button class="btn bp" id="bstart" onclick="startGen()">▶ START SNIPER</button>
+          <button class="btn bd" id="bstop"  onclick="stopGen()" disabled>⬛ STOP</button>
+        </div>
+      </div>
+      <div class="card mt20">
+        <div class="ct2">Progress</div>
+        <div class="pbw"><div class="pbb" id="pbar"></div></div>
+        <div class="pt" id="ptxt">0 / 0 checked</div>
+      </div>
+    </section>
 
-        <!-- ─── RESULTS ───────────────────────────────────────────── -->
-        <div class="tab-pane" id="pane-results">
-          <div class="sub-tabs">
-            <div class="sub-tab active" data-sub="valid">✅ Valid</div>
-            <div class="sub-tab" data-sub="invalid">❌ Taken</div>
+    <!-- CHECKER -->
+    <section class="pg" id="p-chk">
+      <div class="ph">Username Checker</div>
+      <div class="card">
+        <div class="ct2">Single Username Check</div>
+        <div class="ir">
+          <input type="text" id="cki" placeholder="Enter Discord username...">
+          <button class="btn bp" id="ckbtn" onclick="checkSingle()">CHECK</button>
+        </div>
+        <div id="ckr" class="cr"></div>
+      </div>
+    </section>
+
+    <!-- PROXIES -->
+    <section class="pg" id="p-prx">
+      <div class="ph">Proxy Manager</div>
+      <div class="sgsm">
+        <div class="scsm">  <span id="pxt">0</span>  <span>Total</span></div>
+        <div class="scsm p"><span id="pxok">0</span> <span>Healthy</span></div>
+        <div class="scsm d"><span id="pxd">0</span>  <span>Dead</span></div>
+        <div class="scsm w"><span id="pxu">0</span>  <span>Untested</span></div>
+      </div>
+      <div class="card">
+        <div class="ct2">Add Single Proxy</div>
+        <div class="ir">
+          <input type="text" id="pxin" placeholder="host:port  or  user:pass@host:port  or  socks5://host:port">
+          <button class="btn bp" onclick="addProxy()">ADD</button>
+        </div>
+      </div>
+      <div class="card mt20">
+        <div class="ct2">Bulk Import</div>
+        <textarea id="pxbulk" placeholder="One proxy per line:&#10;1.2.3.4:1080&#10;user:pass@5.6.7.8:8080&#10;socks5://9.10.11.12:1080" rows="5"></textarea>
+        <div class="br mt10">
+          <button class="btn bp" onclick="bulkProxy()">📥 IMPORT</button>
+        </div>
+      </div>
+      <div class="br mt20">
+        <button class="btn bs" onclick="testProxies()">🧪 TEST ALL</button>
+        <button class="btn bw" onclick="delDead()">🗑 DEL DEAD</button>
+        <button class="btn bd" onclick="clearProxies()">💣 CLEAR ALL</button>
+      </div>
+      <div class="card mt20">
+        <div class="ct2">Proxy List</div>
+        <div class="pxl" id="pxlist"></div>
+      </div>
+    </section>
+
+    <!-- TOKENS -->
+    <section class="pg" id="p-tok">
+      <div class="ph">Discord Tokens <span class="badge">OPTIONAL</span></div>
+      <div class="ib">ℹ️ Tokens optional. With tokens: 10 at a time. Without: 3 at a time + 7s delay.</div>
+      <div class="card mt20">
+        <div class="ct2">Add Token</div>
+        <div class="ir">
+          <input type="text" id="tkin" placeholder="Discord account token...">
+          <button class="btn bp" onclick="addToken()">ADD</button>
+        </div>
+      </div>
+      <div class="card mt20">
+        <div class="ct2">Bulk Import</div>
+        <textarea id="tkbulk" placeholder="One token per line" rows="5"></textarea>
+        <div class="br mt10">
+          <button class="btn bp" onclick="bulkTokens()">📥 IMPORT</button>
+          <button class="btn bd" onclick="clearTokens()">💣 CLEAR ALL</button>
+        </div>
+      </div>
+      <div class="card mt20">
+        <div class="ct2">Token List</div>
+        <div id="tkl"></div>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="pg" id="p-res">
+      <div class="ph">Valid Usernames</div>
+      <div class="rh">
+        <div class="fg">
+          <button class="fb on" onclick="filterR(this,'')">All</button>
+          <button class="fb" onclick="filterR(this,'4')">4 Chars</button>
+          <button class="fb" onclick="filterR(this,'5')">5 Chars</button>
+          <button class="fb" onclick="filterR(this,'6')">6 Chars</button>
+        </div>
+        <div class="rac">
+          <button class="btn bp sm" onclick="exportR()">⬇ EXPORT .TXT</button>
+          <button class="btn bd sm" onclick="delAllR()">🗑 DELETE ALL</button>
+        </div>
+      </div>
+      <div class="rg" id="rgrid"></div>
+    </section>
+
+    <!-- WEBHOOK -->
+    <section class="pg" id="p-wh">
+      <div class="ph">Webhook Settings</div>
+      <div class="card">
+        <div class="ct2">Discord Webhook URL</div>
+        <div class="ir">
+          <input type="text" id="whurl" placeholder="https://discord.com/api/webhooks/...">
+          <button class="btn bp" onclick="saveWH()">SAVE</button>
+        </div>
+        <div class="br mt10">
+          <button class="btn bs" onclick="testWH()">🧪 SEND TEST</button>
+        </div>
+      </div>
+      <div class="card mt20">
+        <div class="ct2">Message Preview</div>
+        <div class="wp">
+          <div class="wph">
+            <div class="wpav">🎯</div>
+            <div><div class="wpn">Z3NITH SNIPER GOD <span class="wpbot">BOT</span></div></div>
           </div>
-
-          <div class="sub-pane active" id="sub-valid">
-            <div class="btn-row" style="margin-bottom:12px;">
-              <button class="btn btn-neon btn-sm" onclick="copyAll()">📋 COPY ALL</button>
-              <button class="btn btn-cyan btn-sm" onclick="exportTxt()">💾 EXPORT .TXT</button>
-              <button class="btn btn-red btn-sm" onclick="deleteAllValid()">🗑 DELETE ALL</button>
+          <div class="wpe">
+            <div class="wpet">🎯 Z3NITH SNIPER GOD</div>
+            <div class="wped"><strong>Rare Username Discovered!</strong></div>
+            <div class="wpfs">
+              <div class="wpf"><div class="wpfn">👤 Username</div><div class="wpfv">`example`</div></div>
+              <div class="wpf"><div class="wpfn">✅ Status</div><div class="wpfv"><strong style="color:var(--p)">VALID</strong></div></div>
+              <div class="wpf"><div class="wpfn">🔢 Type</div><div class="wpfv">4 Characters</div></div>
+              <div class="wpf full"><div class="wpfn">⏰ Found At</div><div class="wpfv">2026-11-17 04:24:00 UTC</div></div>
             </div>
-            <div class="username-list" id="valid-list">
-              <div class="empty-state"><div class="e-icon">🎯</div>No valid usernames yet — start the sniper</div>
-            </div>
-          </div>
-
-          <div class="sub-pane" id="sub-invalid">
-            <div class="btn-row" style="margin-bottom:12px;">
-              <button class="btn btn-red btn-sm" onclick="deleteAllInvalid()">🗑 DELETE ALL TAKEN</button>
-            </div>
-            <div class="username-list" id="invalid-list">
-              <div class="empty-state"><div class="e-icon">📭</div>No taken usernames tracked yet</div>
-            </div>
+            <div class="wpft">Z3NITH SNIPER GOD • Stay Grinding 🔥</div>
           </div>
         </div>
+      </div>
+    </section>
 
-        <!-- ─── LOGS ──────────────────────────────────────────────── -->
-        <div class="tab-pane" id="pane-logs">
-          <div class="btn-row" style="margin-bottom:12px;">
-            <button class="btn btn-sm btn-cyan" onclick="clearLogs()">🧹 CLEAR</button>
-            <button class="btn btn-sm btn-neon" onclick="scrollLogsBottom()">⬇ BOTTOM</button>
-          </div>
-          <div class="log-wrap" id="log-wrap"></div>
-        </div>
+    <!-- LOGS -->
+    <section class="pg" id="p-log">
+      <div class="ph">Activity Logs</div>
+      <div class="lhdr">
+        <button class="btn bd sm" onclick="clearLogs()">🗑 CLEAR LOGS</button>
+      </div>
+      <div class="lw" id="lw">
+        <div id="ll"><div class="empty">No logs yet.</div></div>
+      </div>
+    </section>
 
-        <!-- ─── SETTINGS ──────────────────────────────────────────── -->
-        <div class="tab-pane" id="pane-settings">
-          <div class="card">
-            <div class="card-title">Discord Token</div>
-            <div class="settings-row">
-              <label>Your Discord User Token</label>
-              <input type="password" id="s-token" placeholder="Paste your Discord token here..." class="glow-input"/>
-              <div class="hint">Required for username checking. Get it from Discord DevTools → Network → any request → Authorization header.</div>
-              <div id="token-status" class="token-status">⚠ Not set</div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-title">Webhook</div>
-            <div class="settings-row">
-              <label>Discord Webhook URL</label>
-              <input type="text" id="s-webhook" placeholder="https://discord.com/api/webhooks/..." class="glow-input"/>
-              <div class="hint">Valid usernames will be sent here automatically.</div>
-            </div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-neon" onclick="saveSettings()">💾 SAVE SETTINGS</button>
-          </div>
-        </div>
-
-      </div><!-- /content -->
-    </div><!-- /main -->
   </div>
 </div>
 
-<!-- rate limit banner -->
-<div id="rate-banner">⏳ Rate limited — waiting <span id="rate-secs">0</span>s</div>
-
-<!-- toast -->
 <div id="toast"></div>
 
 <script>
-// ─── MATRIX RAIN ─────────────────────────────────────────────────────────────
+{% raw %}
+// ── PARTICLES ─────────────────────────────────────────────────────────────────
 (function(){
-  const cv = document.getElementById('matrix');
-  const ctx = cv.getContext('2d');
-  function resize(){cv.width=window.innerWidth;cv.height=window.innerHeight;}
-  resize();
-  window.addEventListener('resize',resize);
-  const ch='アイウエオカキクケコサシスセソタチツテト0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*';
-  const fs=14;
-  let cols=Math.floor(cv.width/fs);
-  let drops=Array(cols).fill(1);
-  window.addEventListener('resize',()=>{
-    cols=Math.floor(cv.width/fs);
-    drops=Array(cols).fill(1);
-  });
+  const cv=document.getElementById('bgc'),ctx=cv.getContext('2d');
+  let W,H,pts=[];
+  function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  function mkp(){return{x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.5,vy:(Math.random()-.5)*.5,r:Math.random()*1.5+.5,a:Math.random()*.7+.3};}
+  for(let i=0;i<90;i++)pts.push(mkp());
   function draw(){
-    ctx.fillStyle='rgba(0,0,8,0.055)';
-    ctx.fillRect(0,0,cv.width,cv.height);
-    ctx.font=`${fs}px JetBrains Mono,monospace`;
-    for(let i=0;i<drops.length;i++){
-      const c=ch[Math.floor(Math.random()*ch.length)];
-      const bright=Math.random()>.85;
-      ctx.fillStyle=bright?'#ffffff':( Math.random()>.7?'#00ffcc':'#00ff88');
-      ctx.fillText(c,i*fs,drops[i]*fs);
-      if(drops[i]*fs>cv.height&&Math.random()>.975)drops[i]=0;
-      drops[i]++;
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;});
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<130){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle='rgba(0,255,136,'+(0.1*(1-d/130))+')';ctx.lineWidth=.6;ctx.stroke();}
     }
+    pts.forEach(p=>{ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,255,136,'+(p.a*.5)+')';ctx.fill();});
+    requestAnimationFrame(draw);
   }
-  setInterval(draw,45);
+  draw();
 })();
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-let validList=[], snipeTotal=0;
-const socket=io();
+// ── GLOBALS ───────────────────────────────────────────────────────────────────
+const BOOT=document.body.dataset.page;
+let curFilter='',lastLogN=0;
 
-// ─── SOCKET EVENTS ───────────────────────────────────────────────────────────
-socket.on('log', e=>appendLog(e));
-socket.on('new_valid',d=>{
-  validList.push(d.u);
-  renderValid();
-  updateTopbar();
-  document.getElementById('st-valid').textContent=validList.length;
-  toast(`✅ ${d.u}  (${d.l}c)`,'ok');
-});
-socket.on('new_invalid',d=>{
-  document.getElementById('st-invalid').textContent=
-    parseInt(document.getElementById('st-invalid').textContent||0)+1;
-});
-socket.on('progress',d=>{
-  document.getElementById('prog-bar').style.width=d.pct+'%';
-  document.getElementById('prog-pct').textContent=d.pct+'%';
-  document.getElementById('prog-txt').textContent=`${d.checked} / ${d.total} checked`;
-  document.getElementById('st-checked').textContent=d.checked;
-  document.getElementById('st-valid').textContent=d.valid;
-  document.getElementById('st-invalid').textContent=d.invalid;
-});
-socket.on('done',d=>{
-  setRunning(false);
-  toast(`🏁 Done — ${d.valid} valid found`,'ok');
-  loadResults();
-});
-socket.on('rate_limit',d=>{
-  const b=document.getElementById('rate-banner');
-  b.classList.add('show');
-  document.getElementById('rate-secs').textContent=d.s;
-});
-socket.on('rate_limit_clear',()=>{
-  document.getElementById('rate-banner').classList.remove('show');
-});
-socket.on('auth_error',()=>{
-  setRunning(false);
-  toast('❌ Auth error — add token in Settings','err');
+// ── BOOT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+  if(BOOT==='app')showApp();
 });
 
-// ─── NAV ─────────────────────────────────────────────────────────────────────
-document.querySelectorAll('[data-nav]').forEach(el=>{
-  el.addEventListener('click',()=>{
-    document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('pane-'+el.dataset.nav).classList.add('active');
-    if(el.dataset.nav==='results')loadResults();
-    if(el.dataset.nav==='proxies')loadProxies();
-    if(el.dataset.nav==='logs')loadLogs();
-    if(el.dataset.nav==='settings')loadSettings();
-  });
-});
-
-// sub tabs
-document.querySelectorAll('[data-sub]').forEach(el=>{
-  el.addEventListener('click',()=>{
-    document.querySelectorAll('[data-sub]').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.sub-pane').forEach(x=>x.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('sub-'+el.dataset.sub).classList.add('active');
-  });
-});
-
-// length checkboxes
-document.querySelectorAll('.len-opt').forEach(el=>{
-  el.addEventListener('click',()=>{
-    const cb=el.querySelector('input');
-    cb.checked=!cb.checked;
-    el.classList.toggle('checked',cb.checked);
-    el.querySelector('.box').textContent=cb.checked?'✓':'';
-  });
-});
-
-// range sync
-function syncCount(v){
-  document.getElementById('count-disp').textContent=v;
-  // update range gradient
-  const r=document.getElementById('count-range');
-  const pct=(v-1)/59*100;
-  r.style.background=`linear-gradient(to right,var(--neon) 0%,var(--neon) ${pct}%,rgba(255,255,255,.1) ${pct}%)`;
-}
-
-// ─── LOGIN / LOGOUT ──────────────────────────────────────────────────────────
-function doLogin(){
-  const u=document.getElementById('l-user').value;
-  const p=document.getElementById('l-pass').value;
-  fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({u,p})})
-    .then(r=>r.json()).then(d=>{
-      if(d.ok){
-        document.getElementById('login-screen').style.display='none';
-        document.getElementById('app').style.display='block';
-        init();
-      } else {
-        document.getElementById('login-err').style.display='block';
-        setTimeout(()=>document.getElementById('login-err').style.display='none',2000);
-      }
-    });
-}
-document.getElementById('l-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-document.getElementById('l-user').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-
-function doLogout(){
-  fetch('/api/logout',{method:'POST'}).then(()=>{
-    document.getElementById('app').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-  });
-}
-
-// ─── INIT ────────────────────────────────────────────────────────────────────
-function init(){
-  fetch('/api/status').then(r=>r.json()).then(d=>{
-    document.getElementById('tb-valid').textContent=d.valid;
-    document.getElementById('tb-proxies').textContent=d.proxies;
-    if(d.running)setRunning(true);
-  });
-  loadLogs();
-}
-
-// ─── SNIPER ──────────────────────────────────────────────────────────────────
-function getSelectedLengths(){
-  return [...document.querySelectorAll('.len-opt input')]
-    .filter(x=>x.checked).map(x=>parseInt(x.value));
-}
-
-function startSnipe(){
-  const lengths=getSelectedLengths();
-  if(!lengths.length){toast('Select at least one length','err');return;}
-  const count=parseInt(document.getElementById('count-range').value);
-  document.getElementById('st-total').textContent=count;
-  document.getElementById('st-checked').textContent='0';
-  document.getElementById('st-valid').textContent='0';
-  document.getElementById('st-invalid').textContent='0';
-  document.getElementById('prog-bar').style.width='0%';
-  document.getElementById('prog-pct').textContent='0%';
-  snipeTotal=count;
-  fetch('/api/snipe/start',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({count,lengths})
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok)setRunning(true);
-    else toast(d.error||'Error','err');
-  });
-}
-
-function stopSnipe(){
-  fetch('/api/snipe/stop',{method:'POST'}).then(()=>setRunning(false));
-}
-
-function setRunning(on){
-  document.getElementById('btn-start').disabled=on;
-  document.getElementById('btn-stop').disabled=!on;
-  document.getElementById('run-ind').classList.toggle('on',on);
-}
-
-// ─── CHECKER ─────────────────────────────────────────────────────────────────
-function checkOne(){
-  const u=document.getElementById('check-input').value.trim().toLowerCase();
-  if(!u){toast('Enter a username','err');return;}
-  const r=document.getElementById('check-result');
-  r.className='check-result';r.style.display='none';
-  fetch('/api/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u})})
-    .then(x=>x.json()).then(d=>{
-      r.style.display='flex';
-      if(d.error){
-        r.className='check-result error';
-        r.textContent='⚠ '+d.error;
-      } else if(d.available){
-        r.className='check-result valid';
-        r.innerHTML=`✅ <strong>${d.username}</strong> — AVAILABLE`;
-      } else {
-        r.className='check-result taken';
-        r.innerHTML=`❌ <strong>${d.username}</strong> — TAKEN`;
-      }
-    });
-}
-
-async function checkBulk(){
-  const lines=document.getElementById('bulk-check-input').value.trim().split('\n').map(x=>x.trim()).filter(Boolean);
-  if(!lines.length){toast('Enter usernames','err');return;}
-  const out=document.getElementById('bulk-results');
-  out.innerHTML='<div style="color:var(--txt2);font-size:12px;font-family:var(--mono)">Checking...</div>';
-  const results=[];
-  for(const u of lines){
-    const d=await fetch('/api/check',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u})}).then(x=>x.json());
-    results.push({u,avail:d.available,err:d.error});
-  }
-  out.innerHTML=results.map(r=>{
-    if(r.err)return `<div style="padding:4px 0;font-size:12px;font-family:var(--mono);color:var(--orange)">⚠ ${r.u} — ${r.err}</div>`;
-    if(r.avail)return `<div style="padding:4px 0;font-size:12px;font-family:var(--mono);color:var(--neon)">✅ ${r.u} — AVAILABLE</div>`;
-    return `<div style="padding:4px 0;font-size:12px;font-family:var(--mono);color:var(--pink)">❌ ${r.u} — TAKEN</div>`;
-  }).join('');
-}
-
-// ─── PROXIES ─────────────────────────────────────────────────────────────────
-function loadProxies(){
-  fetch('/api/proxies').then(r=>r.json()).then(d=>{
-    document.getElementById('proxy-count-badge').textContent=`${d.count} proxies`;
-    document.getElementById('tb-proxies').textContent=d.count;
-    const list=document.getElementById('proxy-list');
-    if(!d.proxies.length){
-      list.innerHTML='<div class="empty-state"><div class="e-icon">🌐</div>No proxies added</div>';
-      return;
+// ── LOGIN ─────────────────────────────────────────────────────────────────────
+async function doLogin(){
+  const u=document.getElementById('lu').value.trim();
+  const p=document.getElementById('lp').value.trim();
+  const err=document.getElementById('lerr');
+  if(!u||!p){err.textContent='⚠ Enter credentials';return;}
+  const btn=document.getElementById('lbtn');
+  btn.textContent='▶ AUTHENTICATING...';btn.disabled=true;
+  try{
+    const r=await post('/api/login',{u,p});
+    if(r.ok){
+      const lp=document.getElementById('login');
+      lp.style.transition='opacity .5s';lp.style.opacity='0';
+      setTimeout(()=>{lp.style.display='none';showApp();},500);
+    } else {
+      err.textContent='✗ Invalid credentials';
+      btn.textContent='▶ ACCESS SYSTEM';btn.disabled=false;
     }
-    list.innerHTML=d.proxies.map((p,i)=>
-      `<div class="proxy-item">
-        <span class="ep">${p}</span>
-        <button class="del-proxy" onclick="deleteProxy(${i})">✕</button>
-      </div>`
-    ).join('');
-  });
-}
-
-function addSingleProxy(){
-  const v=document.getElementById('proxy-single').value.trim();
-  if(!v){toast('Enter a proxy','err');return;}
-  fetch('/api/proxies',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({proxy:v})})
-    .then(r=>r.json()).then(d=>{
-      document.getElementById('proxy-single').value='';
-      toast(`Added proxy (total: ${d.total})`,'ok');
-      loadProxies();
-    });
-}
-
-function addBulkProxies(){
-  const v=document.getElementById('proxy-bulk').value.trim();
-  if(!v){toast('Enter proxies','err');return;}
-  fetch('/api/proxies',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bulk:v})})
-    .then(r=>r.json()).then(d=>{
-      document.getElementById('proxy-bulk').value='';
-      toast(`Imported ${d.added} proxies`,'ok');
-      loadProxies();
-    });
-}
-
-function deleteProxy(idx){
-  fetch('/api/proxies',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({idx})})
-    .then(()=>loadProxies());
-}
-
-function deleteAllProxies(){
-  if(!confirm('Delete all proxies?'))return;
-  fetch('/api/proxies',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({all:true})})
-    .then(()=>{toast('All proxies deleted','warn');loadProxies();});
-}
-
-// ─── RESULTS ─────────────────────────────────────────────────────────────────
-function loadResults(){
-  fetch('/api/usernames').then(r=>r.json()).then(d=>{
-    validList=d.valid;
-    renderValid();
-    renderInvalid(d.invalid);
-    updateTopbar();
-  });
-}
-
-function renderValid(){
-  const el=document.getElementById('valid-list');
-  if(!validList.length){
-    el.innerHTML='<div class="empty-state"><div class="e-icon">🎯</div>No valid usernames yet</div>';
-    return;
+  }catch{
+    err.textContent='✗ Connection error';
+    btn.textContent='▶ ACCESS SYSTEM';btn.disabled=false;
   }
-  el.innerHTML=validList.map(u=>
-    `<div class="u-item">
-      <span class="uname" onclick="copyUsername('${u}')" title="Click to copy">${u}</span>
-      <span class="len-badge">${u.length}c</span>
-      <button class="copy-btn" onclick="copyUsername('${u}')" title="Copy">📋</button>
-      <button class="del-btn" onclick="deleteValidOne('${u}')" title="Delete">✕</button>
-    </div>`
-  ).join('');
 }
 
-function renderInvalid(list){
-  const el=document.getElementById('invalid-list');
-  if(!list||!list.length){
-    el.innerHTML='<div class="empty-state"><div class="e-icon">📭</div>No taken usernames tracked</div>';
-    return;
+async function doLogout(){await post('/api/logout');location.reload();}
+
+function showApp(){
+  document.getElementById('app').classList.add('show');
+  startPoll();loadWHUrl();
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function go(id){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  const btn=document.querySelector('.nb[data-p="'+id+'"]');
+  if(btn)btn.classList.add('on');
+  if(id==='prx')loadProxies();
+  if(id==='tok')loadTokens();
+  if(id==='res')loadResults();
+  if(id==='log')loadLogs();
+}
+
+// ── POLLING ───────────────────────────────────────────────────────────────────
+function startPoll(){
+  setInterval(async()=>{try{const r=await get('/api/status');updateStats(r.stats);updateRunning(r.running);}catch{}},1500);
+  setInterval(async()=>{if(!document.getElementById('p-log').classList.contains('on'))return;loadLogs();},2000);
+  setInterval(async()=>{if(!document.getElementById('p-res').classList.contains('on'))return;loadResults();},3000);
+  setInterval(async()=>{if(!document.getElementById('p-prx').classList.contains('on'))return;loadProxies();},5000);
+}
+
+function updateStats(s){
+  if(!s)return;
+  set('s-gen',s.gen);set('s-chk',s.checked);set('s-val',s.valid);
+  set('s-inv',s.invalid);set('s-rl',s.rl);set('s-err',s.err);
+  const pct=s.gen>0?Math.round(s.checked/s.gen*100):0;
+  document.getElementById('pbar').style.width=pct+'%';
+  document.getElementById('ptxt').textContent=s.checked+' / '+s.gen+' checked';
+}
+
+function updateRunning(running){
+  const pill=document.getElementById('spill');
+  const bs=document.getElementById('bstart');
+  const bst=document.getElementById('bstop');
+  const ds=document.getElementById('dstat');
+  if(running){
+    pill.textContent='● RUNNING';pill.classList.add('run');
+    if(bs)bs.disabled=true;if(bst)bst.disabled=false;
+    if(ds)ds.innerHTML='<span style="color:var(--p)">⚡ Sniper is running...</span>';
+  } else {
+    pill.textContent='● IDLE';pill.classList.remove('run');
+    if(bs)bs.disabled=false;if(bst)bst.disabled=true;
+    if(ds)ds.textContent='System idle — configure the generator and start sniping.';
   }
-  el.innerHTML=list.map(u=>
-    `<div class="u-item">
-      <span class="uname" style="color:var(--txt2)">${u}</span>
-      <span class="len-badge" style="border-color:rgba(255,0,102,.2);background:rgba(255,0,102,.06);color:var(--pink)">${u.length}c</span>
-      <button class="del-btn" onclick="deleteInvalidOne('${u}')">✕</button>
-    </div>`
-  ).join('');
 }
 
-function copyUsername(u){
-  navigator.clipboard.writeText(u).then(()=>toast(`Copied: ${u}`,'ok'));
+// ── GENERATOR ─────────────────────────────────────────────────────────────────
+function syncA(el){document.getElementById('amtn').value=el.value;}
+function syncAN(el){let v=Math.max(1,Math.min(60,parseInt(el.value)||1));el.value=v;document.getElementById('amts').value=v;}
+
+async function startGen(){
+  const lengths=[];
+  if(document.getElementById('cb4').checked)lengths.push(4);
+  if(document.getElementById('cb5').checked)lengths.push(5);
+  if(document.getElementById('cb6').checked)lengths.push(6);
+  if(!lengths.length){toast('Select at least one length','error');return;}
+  const amount=parseInt(document.getElementById('amtn').value)||60;
+  await post('/api/start',{lengths,amount});
+  toast('Sniper started! 🚀','success');
 }
 
-function copyAll(){
-  if(!validList.length){toast('No valid usernames','err');return;}
-  navigator.clipboard.writeText(validList.join('\n')).then(()=>toast(`Copied ${validList.length} usernames`,'ok'));
+async function stopGen(){await post('/api/stop');toast('Stopping...','info');}
+
+// ── CHECKER ───────────────────────────────────────────────────────────────────
+async function checkSingle(){
+  const u=document.getElementById('cki').value.trim().toLowerCase();
+  if(!u)return;
+  const btn=document.getElementById('ckbtn');
+  const res=document.getElementById('ckr');
+  btn.textContent='CHECKING...';btn.disabled=true;
+  res.className='cr';res.style.display='none';
+  try{
+    const r=await post('/api/check-single',{username:u});
+    if(r.r==='valid'){res.className='cr valid';res.textContent='✅ VALID — @'+u+' is available!';}
+    else if(r.r==='invalid'){res.className='cr invalid';res.textContent='❌ TAKEN — @'+u+' is already taken.';}
+    else if(r.r==='rl'){res.className='cr rl';res.textContent='⚠️ Rate limited. Try again shortly.';}
+    else{res.className='cr rl';res.textContent='💀 Error — add proxies/tokens and retry.';}
+    res.style.display='block';
+  }catch{res.className='cr rl';res.textContent='💀 Connection error.';res.style.display='block';}
+  btn.textContent='CHECK';btn.disabled=false;
 }
 
-function exportTxt(){
-  window.location.href='/api/export';
+// ── PROXIES ───────────────────────────────────────────────────────────────────
+async function addProxy(){
+  const ep=document.getElementById('pxin').value.trim();
+  if(!ep)return;
+  await post('/api/proxies/add',{ep});
+  document.getElementById('pxin').value='';
+  await loadProxies();toast('Proxy added','success');
 }
 
-function deleteValidOne(u){
-  fetch('/api/usernames/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'valid_one',username:u})})
-    .then(()=>{validList=validList.filter(x=>x!==u);renderValid();updateTopbar();});
+async function bulkProxy(){
+  const data=document.getElementById('pxbulk').value;
+  if(!data.trim())return;
+  const r=await post('/api/proxies/bulk',{data});
+  document.getElementById('pxbulk').value='';
+  await loadProxies();toast('Imported '+r.n+' proxies','success');
 }
 
-function deleteInvalidOne(u){
-  fetch('/api/usernames/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'invalid_one',username:u})})
-    .then(()=>loadResults());
+async function testProxies(){
+  await post('/api/proxies/test');
+  toast('Testing proxies in background...','info');
+  setTimeout(loadProxies,4000);setTimeout(loadProxies,10000);setTimeout(loadProxies,20000);
 }
 
-function deleteAllValid(){
-  if(!validList.length){toast('Nothing to delete','err');return;}
-  if(!confirm('Delete all valid usernames?'))return;
-  fetch('/api/usernames/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'valid_all'})})
-    .then(()=>{validList=[];renderValid();updateTopbar();toast('Cleared','warn');});
+async function delDead(){
+  const r=await post('/api/proxies/del-dead');
+  await loadProxies();toast('Deleted '+r.deleted+' dead proxies','info');
 }
 
-function deleteAllInvalid(){
-  fetch('/api/usernames/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'invalid_all'})})
-    .then(()=>{loadResults();toast('Cleared','warn');});
+async function clearProxies(){
+  if(!confirm('Clear all proxies?'))return;
+  await post('/api/proxies/clear');await loadProxies();toast('Cleared','info');
 }
 
-function updateTopbar(){
-  document.getElementById('tb-valid').textContent=validList.length;
+async function delProxy(id){await post('/api/proxies/del',{id});await loadProxies();}
+
+async function loadProxies(){
+  try{
+    const r=await get('/api/proxies');
+    const list=r.proxies;
+    const ok=list.filter(p=>p.s==='ok').length;
+    const dead=list.filter(p=>p.s==='dead').length;
+    const unt=list.filter(p=>p.s==='untested').length;
+    set('pxt',list.length);set('pxok',ok);set('pxd',dead);set('pxu',unt);
+    const el=document.getElementById('pxlist');
+    if(!list.length){el.innerHTML='<div class="empty">No proxies added.</div>';return;}
+    el.innerHTML=list.map(p=>`
+      <div class="pxi">
+        <div class="pxep" title="${esc(p.ep)}">${esc(p.ep)}</div>
+        <div class="pxs ${p.s}">${p.s.toUpperCase()}</div>
+        <button class="pdel" onclick="delProxy(${p.id})">DEL</button>
+      </div>`).join('');
+  }catch{}
 }
 
-// ─── LOGS ─────────────────────────────────────────────────────────────────────
-function loadLogs(){
-  fetch('/api/logs').then(r=>r.json()).then(d=>{
-    const wrap=document.getElementById('log-wrap');
-    wrap.innerHTML='';
-    d.logs.forEach(e=>appendLog(e));
-  });
+// ── TOKENS ────────────────────────────────────────────────────────────────────
+async function addToken(){
+  const t=document.getElementById('tkin').value.trim();
+  if(!t)return;
+  await post('/api/tokens/add',{token:t});
+  document.getElementById('tkin').value='';
+  await loadTokens();toast('Token added','success');
 }
 
-function appendLog(e){
-  const wrap=document.getElementById('log-wrap');
-  if(!wrap)return;
-  const div=document.createElement('div');
-  div.className=`log-entry ${e.level}`;
-  div.innerHTML=`<span class="log-ts">${e.ts}</span><span class="log-msg">${e.msg}</span>`;
-  wrap.appendChild(div);
-  wrap.scrollTop=wrap.scrollHeight;
+async function bulkTokens(){
+  const data=document.getElementById('tkbulk').value;
+  if(!data.trim())return;
+  const r=await post('/api/tokens/bulk',{data});
+  document.getElementById('tkbulk').value='';
+  await loadTokens();toast('Imported '+r.n+' tokens','success');
 }
 
-function clearLogs(){
-  document.getElementById('log-wrap').innerHTML='';
+async function delToken(idx){await post('/api/tokens/del',{idx});await loadTokens();}
+
+async function clearTokens(){
+  if(!confirm('Clear all tokens?'))return;
+  await post('/api/tokens/clear');await loadTokens();toast('Cleared','info');
 }
 
-function scrollLogsBottom(){
-  const w=document.getElementById('log-wrap');
-  w.scrollTop=w.scrollHeight;
+async function loadTokens(){
+  try{
+    const r=await get('/api/tokens');
+    const el=document.getElementById('tkl');
+    if(!r.tokens.length){el.innerHTML='<div class="empty">No tokens added. (Optional)</div>';return;}
+    el.innerHTML=r.tokens.map((t,i)=>`
+      <div class="tki">
+        <div class="tkv">${esc(t)}</div>
+        <button class="pdel" onclick="delToken(${i})">DEL</button>
+      </div>`).join('');
+  }catch{}
 }
 
-// ─── SETTINGS ────────────────────────────────────────────────────────────────
-function loadSettings(){
-  fetch('/api/settings').then(r=>r.json()).then(d=>{
-    if(d.webhook)document.getElementById('s-webhook').value=d.webhook;
-    const ts=document.getElementById('token-status');
-    if(d.token_set){ts.className='token-status set';ts.textContent='✓ Token set';}
-    else{ts.className='token-status';ts.textContent='⚠ Not set';}
-  });
+// ── RESULTS ───────────────────────────────────────────────────────────────────
+function filterR(btn,l){
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');curFilter=l;loadResults();
 }
 
-function saveSettings(){
-  const webhook=document.getElementById('s-webhook').value.trim();
-  const token=document.getElementById('s-token').value.trim();
-  fetch('/api/settings',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({webhook,token})
-  }).then(r=>r.json()).then(d=>{
-    if(d.ok){toast('Settings saved','ok');loadSettings();}
-  });
+async function loadResults(){
+  try{
+    const r=await get('/api/results'+(curFilter?'?l='+curFilter:''));
+    const el=document.getElementById('rgrid');
+    if(!r.results.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">No valid usernames yet. Start the generator!</div>';return;}
+    el.innerHTML=r.results.map(u=>`
+      <div class="rcard">
+        <div class="ru">${esc(u.u)}</div>
+        <div class="rm">${u.l} chars • ${esc(u.t)}</div>
+        <div class="rar">
+          <button class="btn bp sm" onclick="copyTxt('${esc(u.u)}')">📋 COPY</button>
+          <button class="btn bd sm" onclick="delR(${u.id})">DEL</button>
+        </div>
+      </div>`).join('');
+  }catch{}
 }
 
-// ─── TOAST ───────────────────────────────────────────────────────────────────
-let _tt=null;
-function toast(msg,type='ok'){
-  const el=document.getElementById('toast');
-  el.textContent=msg;el.className=`show ${type}`;
-  if(_tt)clearTimeout(_tt);
-  _tt=setTimeout(()=>el.classList.remove('show'),2500);
+async function delR(id){await post('/api/results/del',{id});await loadResults();}
+async function delAllR(){if(!confirm('Delete all valid usernames?'))return;await post('/api/results/del-all');await loadResults();toast('Cleared','info');}
+function exportR(){window.open('/api/results/export','_blank');}
+
+// ── WEBHOOK ───────────────────────────────────────────────────────────────────
+async function loadWHUrl(){try{const r=await get('/api/webhook');const el=document.getElementById('whurl');if(el)el.value=r.url||'';}catch{}}
+async function saveWH(){const url=document.getElementById('whurl').value.trim();await post('/api/webhook',{url});toast('Webhook saved! ✅','success');}
+async function testWH(){
+  const url=document.getElementById('whurl').value.trim();
+  if(!url){toast('Enter a webhook URL first','error');return;}
+  await saveWH();await post('/api/webhook/test');toast('Test message sent!','success');
 }
 
-// auto-init if already logged in (refresh)
-fetch('/api/status').then(r=>{
-  if(r.ok){
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    init();
-  }
-}).catch(()=>{});
+// ── LOGS ──────────────────────────────────────────────────────────────────────
+async function loadLogs(){
+  try{
+    const r=await get('/api/logs');
+    if(r.logs.length===lastLogN)return;
+    lastLogN=r.logs.length;
+    const el=document.getElementById('ll');
+    if(!r.logs.length){el.innerHTML='<div class="empty">No logs yet.</div>';return;}
+    el.innerHTML=r.logs.map(l=>`
+      <div class="le2 ${l.l}">
+        <span class="lt2">[${esc(l.t)}]</span>
+        <span class="lm">${esc(l.m)}</span>
+      </div>`).join('');
+    const w=document.getElementById('lw');w.scrollTop=w.scrollHeight;
+  }catch{}
+}
+
+async function clearLogs(){
+  await post('/api/logs/clear');
+  document.getElementById('ll').innerHTML='<div class="empty">No logs yet.</div>';
+  lastLogN=0;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+async function get(path){const r=await fetch(path);return r.json();}
+async function post(path,body=null){
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):null});
+  return r.json();
+}
+function set(id,val){
+  const el=document.getElementById(id);if(!el)return;
+  if(el.textContent!==String(val)){el.textContent=val;el.style.transform='scale(1.15)';setTimeout(()=>el.style.transform='',160);}
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function copyTxt(t){navigator.clipboard.writeText(t).then(()=>toast('Copied: '+t,'success'));}
+function toast(msg,type='info'){
+  const c=document.getElementById('toast');
+  const d=document.createElement('div');d.className='ti '+type;d.textContent=msg;c.appendChild(d);
+  setTimeout(()=>{d.style.opacity='0';d.style.transition='opacity .3s';setTimeout(()=>d.remove(),300);},3200);
+}
+{% endraw %}
 </script>
 </body>
 </html>
