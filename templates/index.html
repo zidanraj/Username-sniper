@@ -8,7 +8,7 @@
 <style>
 :root{
   --bg:#050508;--s:rgba(0,255,136,.04);--b:rgba(0,255,136,.12);
-  --p:#00ff88;--a:#00d4ff;--danger:#ff4757;--warn:#ffa502;
+  --p:#00ff88;--a:#00d4ff;--danger:#ff4757;--warn:#ffa502;--live:#ff4757;
   --txt:#e2e8f0;--muted:#64748b;--nw:62px;--nh:52px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -54,9 +54,12 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 /* HEADER */
 #hdr{background:rgba(5,5,8,.97);border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;padding:0 24px;backdrop-filter:blur(20px)}
 .htitle{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;color:var(--p);letter-spacing:3px;text-shadow:0 0 12px rgba(0,255,136,.5)}
-#spill{padding:4px 14px;border-radius:20px;font-size:11px;letter-spacing:1px;border:1px solid var(--muted);color:var(--muted);transition:all .3s}
-#spill.run{background:rgba(0,255,136,.1);border-color:var(--p);color:var(--p);animation:spillpulse 1.2s ease-in-out infinite}
+.hpills{display:flex;gap:8px}
+.spill{padding:4px 14px;border-radius:20px;font-size:11px;letter-spacing:1px;border:1px solid var(--muted);color:var(--muted);transition:all .3s}
+.spill.run{background:rgba(0,255,136,.1);border-color:var(--p);color:var(--p);animation:spillpulse 1.2s ease-in-out infinite}
+.spill.live{background:rgba(255,71,87,.1);border-color:var(--live);color:var(--live);animation:livepulse 1s ease-in-out infinite}
 @keyframes spillpulse{0%,100%{box-shadow:0 0 8px rgba(0,255,136,.3)}50%{box-shadow:0 0 22px rgba(0,255,136,.6)}}
+@keyframes livepulse{0%,100%{box-shadow:0 0 8px rgba(255,71,87,.3)}50%{box-shadow:0 0 22px rgba(255,71,87,.6)}}
 
 /* CONTENT */
 #ct{overflow-y:auto;padding:24px;min-height:0;scrollbar-width:thin;scrollbar-color:var(--b) transparent}
@@ -71,8 +74,19 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px;position:relative;overflow:hidden;transition:border .3s}
 .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--p),transparent);opacity:.5}
 .card:hover{border-color:rgba(0,255,136,.22)}
+.card.live-card{border-color:rgba(255,71,87,.25);background:rgba(255,71,87,.03)}
+.card.live-card::before{background:linear-gradient(90deg,transparent,var(--live),transparent)}
+.card.live-card:hover{border-color:rgba(255,71,87,.45)}
+.card.live-card.active{border-color:rgba(255,71,87,.5);animation:livecard 1.5s ease-in-out infinite}
+@keyframes livecard{0%,100%{box-shadow:0 0 0 rgba(255,71,87,0)}50%{box-shadow:0 0 25px rgba(255,71,87,.2)}}
 .ct2{font-family:'Orbitron',monospace;font-size:11px;letter-spacing:2px;color:var(--a);text-transform:uppercase;margin-bottom:14px}
+.ct2.red{color:var(--live)}
 .mt10{margin-top:10px}.mt20{margin-top:20px}
+
+/* LIVE DOT */
+.ldot{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;vertical-align:middle}
+.ldot.on{background:var(--live);box-shadow:0 0 8px var(--live);animation:dotblink 1s ease-in-out infinite}
+@keyframes dotblink{0%,100%{opacity:1}50%{opacity:.3}}
 
 /* STATS */
 .sg{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
@@ -105,7 +119,12 @@ textarea{resize:vertical;min-height:90px}
 .bd{border-color:var(--danger);color:var(--danger)}.bd:hover{background:rgba(255,71,87,.09)}
 .bs{border-color:var(--a);color:var(--a)}.bs:hover{background:rgba(0,212,255,.09)}
 .bw{border-color:var(--warn);color:var(--warn)}.bw:hover{background:rgba(255,165,2,.09)}
+.blv{border-color:var(--live);color:var(--live);font-weight:700}
+.blv:hover{background:rgba(255,71,87,.12);box-shadow:0 0 20px rgba(255,71,87,.3)}
+.blv.pulse{animation:btnlive 1.2s ease-in-out infinite}
+@keyframes btnlive{0%,100%{box-shadow:0 0 0 rgba(255,71,87,0)}50%{box-shadow:0 0 20px rgba(255,71,87,.4)}}
 .btn.sm{padding:7px 12px;font-size:11px}
+.btn.lg{padding:14px 28px;font-size:14px;letter-spacing:2px}
 .btn:disabled{opacity:.3;cursor:not-allowed}
 .br{display:flex;gap:10px;flex-wrap:wrap}
 .fr{margin-bottom:16px}
@@ -120,6 +139,11 @@ textarea{resize:vertical;min-height:90px}
 .pbb::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);animation:shim 1.5s infinite}
 @keyframes shim{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .pt{font-size:11px;color:var(--muted);text-align:center}
+
+/* DIVIDER */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0}
+.divider span{color:var(--muted);font-size:11px;letter-spacing:2px;white-space:nowrap}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--b)}
 
 /* CHECKER */
 .cr{margin-top:16px;padding:14px;border-radius:8px;font-size:14px;text-align:center;display:none}
@@ -155,7 +179,7 @@ textarea{resize:vertical;min-height:90px}
 .rm{font-size:11px;color:var(--muted);margin-bottom:12px}
 .rar{display:flex;gap:6px}
 
-/* WEBHOOK PREVIEW */
+/* WEBHOOK */
 .wp{background:rgba(0,0,0,.55);border-radius:8px;padding:16px;border-left:4px solid var(--p)}
 .wph{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .wpav{width:36px;height:36px;background:rgba(0,255,136,.18);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px}
@@ -189,6 +213,11 @@ textarea{resize:vertical;min-height:90px}
 .ti.error{border-color:rgba(255,71,87,.4);color:var(--danger)}
 .ti.info{border-color:rgba(0,212,255,.4);color:var(--a)}
 .empty{text-align:center;padding:36px;color:var(--muted);font-size:13px}
+
+/* RL WARNING */
+.rl-banner{display:none;background:rgba(255,165,2,.08);border:1px solid rgba(255,165,2,.3);border-radius:8px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px;animation:rlpulse 2s ease-in-out infinite}
+.rl-banner.show{display:block}
+@keyframes rlpulse{0%,100%{opacity:1}50%{opacity:.6}}
 </style>
 </head>
 <body data-page="{{ page }}">
@@ -211,21 +240,24 @@ textarea{resize:vertical;min-height:90px}
 <div id="app">
   <nav id="nav">
     <div class="nlogo">🎯</div>
-    <button class="nb on" data-p="dash" title="Dashboard" onclick="go('dash')">🏠</button>
-    <button class="nb" data-p="gen"  title="Generator"  onclick="go('gen')">🎯</button>
-    <button class="nb" data-p="chk"  title="Checker"    onclick="go('chk')">🔍</button>
-    <button class="nb" data-p="prx"  title="Proxies"    onclick="go('prx')">🌐</button>
-    <button class="nb" data-p="tok"  title="Tokens"     onclick="go('tok')">🔑</button>
-    <button class="nb" data-p="res"  title="Results"    onclick="go('res')">✅</button>
-    <button class="nb" data-p="wh"   title="Webhook"    onclick="go('wh')">🪝</button>
-    <button class="nb" data-p="log"  title="Logs"       onclick="go('log')">📋</button>
+    <button class="nb on" data-p="dash"  title="Dashboard" onclick="go('dash')">🏠</button>
+    <button class="nb"    data-p="gen"   title="Generator"  onclick="go('gen')">🎯</button>
+    <button class="nb"    data-p="chk"   title="Checker"    onclick="go('chk')">🔍</button>
+    <button class="nb"    data-p="prx"   title="Proxies"    onclick="go('prx')">🌐</button>
+    <button class="nb"    data-p="tok"   title="Tokens"     onclick="go('tok')">🔑</button>
+    <button class="nb"    data-p="res"   title="Results"    onclick="go('res')">✅</button>
+    <button class="nb"    data-p="wh"    title="Webhook"    onclick="go('wh')">🪝</button>
+    <button class="nb"    data-p="log"   title="Logs"       onclick="go('log')">📋</button>
     <div class="nsp"></div>
     <button class="nb logout" title="Logout" onclick="doLogout()">🚪</button>
   </nav>
 
   <div id="hdr">
     <div class="htitle">Z3NITH SNIPER GOD</div>
-    <div id="spill">● IDLE</div>
+    <div class="hpills">
+      <div class="spill" id="spill-reg">● IDLE</div>
+      <div class="spill" id="spill-live" style="display:none">🔴 LIVE</div>
+    </div>
   </div>
 
   <div id="ct">
@@ -233,7 +265,26 @@ textarea{resize:vertical;min-height:90px}
     <!-- DASHBOARD -->
     <section class="pg on" id="p-dash">
       <div class="ph">Dashboard</div>
-      <div class="sg">
+
+      <!-- LIVE MODE CARD — big and prominent -->
+      <div class="card live-card" id="live-card">
+        <div class="ct2 red"><span class="ldot" id="ldot"></span>LIVE MODE — Infinite Snipe</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">LIVE mode generates and checks usernames <strong style="color:var(--txt)">forever</strong> until you stop it. No amount limit. Rate limits handled automatically.</div>
+        <div class="fr">
+          <label>Lengths to snipe</label>
+          <div class="cbg">
+            <label class="cbl"><input type="checkbox" id="lcb4" checked> 4 Chars</label>
+            <label class="cbl"><input type="checkbox" id="lcb5"> 5 Chars</label>
+            <label class="cbl"><input type="checkbox" id="lcb6"> 6 Chars</label>
+          </div>
+        </div>
+        <div class="br">
+          <button class="btn blv lg" id="btn-live-start" onclick="startLive()">🔴 LIVE START</button>
+          <button class="btn bd lg" id="btn-live-stop" onclick="stopLive()" disabled>⬛ LIVE STOP</button>
+        </div>
+      </div>
+
+      <div class="sg mt20">
         <div class="sc">  <div class="sl">Generated</div>  <div class="sv" id="s-gen">0</div></div>
         <div class="sc">  <div class="sl">Checked</div>    <div class="sv" id="s-chk">0</div></div>
         <div class="sc p"><div class="sl">Valid</div>       <div class="sv" id="s-val">0</div></div>
@@ -241,17 +292,20 @@ textarea{resize:vertical;min-height:90px}
         <div class="sc w"><div class="sl">Rate Limited</div><div class="sv" id="s-rl">0</div></div>
         <div class="sc d"><div class="sl">Errors</div>     <div class="sv" id="s-err">0</div></div>
       </div>
+
       <div class="card">
         <div class="ct2">System Status</div>
-        <div id="dstat" style="color:var(--muted);font-size:13px;">System idle — configure the generator and start sniping.</div>
+        <div id="dstat" style="color:var(--muted);font-size:13px;">System idle — use LIVE START above for infinite snipe, or go to Generator for fixed amount.</div>
       </div>
     </section>
 
     <!-- GENERATOR -->
     <section class="pg" id="p-gen">
       <div class="ph">Username Generator</div>
+
+      <!-- FIXED AMOUNT MODE -->
       <div class="card">
-        <div class="ct2">Configuration</div>
+        <div class="ct2">Fixed Amount Mode</div>
         <div class="fr">
           <label>Username Lengths</label>
           <div class="cbg">
@@ -268,14 +322,36 @@ textarea{resize:vertical;min-height:90px}
           </div>
         </div>
         <div class="br">
-          <button class="btn bp" id="bstart" onclick="startGen()">▶ START SNIPER</button>
-          <button class="btn bd" id="bstop"  onclick="stopGen()" disabled>⬛ STOP</button>
+          <button class="btn bp" id="bstart" onclick="startGen()">▶ START</button>
+          <button class="btn bd" id="bstop" onclick="stopGen()" disabled>⬛ STOP</button>
         </div>
       </div>
+
       <div class="card mt20">
         <div class="ct2">Progress</div>
+        <div class="rl-banner" id="rl-banner">⚠️ Rate limited — waiting before retry. This is normal, do not stop.</div>
         <div class="pbw"><div class="pbb" id="pbar"></div></div>
         <div class="pt" id="ptxt">0 / 0 checked</div>
+      </div>
+
+      <div class="divider"><span>OR USE INFINITE MODE</span></div>
+
+      <!-- LIVE MODE duplicate controls -->
+      <div class="card live-card" id="live-card-gen">
+        <div class="ct2 red"><span class="ldot" id="ldot2"></span>LIVE MODE — No Limit</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:18px;">Runs forever, handles rate limits automatically, stops only when you say so.</div>
+        <div class="fr">
+          <label>Lengths</label>
+          <div class="cbg">
+            <label class="cbl"><input type="checkbox" id="lcb4b" checked> 4 Chars</label>
+            <label class="cbl"><input type="checkbox" id="lcb5b"> 5 Chars</label>
+            <label class="cbl"><input type="checkbox" id="lcb6b"> 6 Chars</label>
+          </div>
+        </div>
+        <div class="br">
+          <button class="btn blv" id="btn-live-start2" onclick="startLive2()">🔴 LIVE START</button>
+          <button class="btn bd" id="btn-live-stop2" onclick="stopLive()" disabled>⬛ LIVE STOP</button>
+        </div>
       </div>
     </section>
 
@@ -304,7 +380,7 @@ textarea{resize:vertical;min-height:90px}
       <div class="card">
         <div class="ct2">Add Single Proxy</div>
         <div class="ir">
-          <input type="text" id="pxin" placeholder="host:port  or  user:pass@host:port  or  socks5://host:port">
+          <input type="text" id="pxin" placeholder="host:port  or  user:pass@host:port">
           <button class="btn bp" onclick="addProxy()">ADD</button>
         </div>
       </div>
@@ -329,7 +405,7 @@ textarea{resize:vertical;min-height:90px}
     <!-- TOKENS -->
     <section class="pg" id="p-tok">
       <div class="ph">Discord Tokens <span class="badge">OPTIONAL</span></div>
-      <div class="ib">ℹ️ Tokens optional. With tokens: 10 at a time. Without: 3 at a time + 7s delay.</div>
+      <div class="ib">ℹ️ Tokens optional. With tokens: 10 at a time. Without: 2 at a time.</div>
       <div class="card mt20">
         <div class="ct2">Add Token</div>
         <div class="ir">
@@ -447,7 +523,6 @@ textarea{resize:vertical;min-height:90px}
 const BOOT=document.body.dataset.page;
 let curFilter='',lastLogN=0;
 
-// ── BOOT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('lp').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   document.getElementById('lu').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
@@ -500,7 +575,9 @@ function go(id){
 
 // ── POLLING ───────────────────────────────────────────────────────────────────
 function startPoll(){
-  setInterval(async()=>{try{const r=await get('/api/status');updateStats(r.stats);updateRunning(r.running);}catch{}},1500);
+  setInterval(async()=>{
+    try{const r=await get('/api/status');updateStats(r.stats);updateRunning(r.running,r.live_running);}catch{}
+  },1500);
   setInterval(async()=>{if(!document.getElementById('p-log').classList.contains('on'))return;loadLogs();},2000);
   setInterval(async()=>{if(!document.getElementById('p-res').classList.contains('on'))return;loadResults();},3000);
   setInterval(async()=>{if(!document.getElementById('p-prx').classList.contains('on'))return;loadProxies();},5000);
@@ -513,21 +590,60 @@ function updateStats(s){
   const pct=s.gen>0?Math.round(s.checked/s.gen*100):0;
   document.getElementById('pbar').style.width=pct+'%';
   document.getElementById('ptxt').textContent=s.checked+' / '+s.gen+' checked';
+  // rl banner
+  const banner=document.getElementById('rl-banner');
+  if(s.rl>0&&pct<100)banner.classList.add('show');
+  else banner.classList.remove('show');
 }
 
-function updateRunning(running){
-  const pill=document.getElementById('spill');
+function updateRunning(running, liveRunning){
+  // regular pill
+  const rp=document.getElementById('spill-reg');
+  const lp=document.getElementById('spill-live');
   const bs=document.getElementById('bstart');
   const bst=document.getElementById('bstop');
+  const bls=document.getElementById('btn-live-start');
+  const blst=document.getElementById('btn-live-stop');
+  const bls2=document.getElementById('btn-live-start2');
+  const blst2=document.getElementById('btn-live-stop2');
   const ds=document.getElementById('dstat');
+  const lc=document.getElementById('live-card');
+  const lc2=document.getElementById('live-card-gen');
+  const ldot=document.getElementById('ldot');
+  const ldot2=document.getElementById('ldot2');
+
   if(running){
-    pill.textContent='● RUNNING';pill.classList.add('run');
+    rp.textContent='● RUNNING';rp.classList.add('run');rp.style.display='';
     if(bs)bs.disabled=true;if(bst)bst.disabled=false;
-    if(ds)ds.innerHTML='<span style="color:var(--p)">⚡ Sniper is running...</span>';
+    if(bls)bls.disabled=true;if(blst)blst.disabled=true;
+    if(bls2)bls2.disabled=true;if(blst2)blst2.disabled=true;
+    if(ds)ds.innerHTML='<span style="color:var(--p)">⚡ Fixed-amount sniper running...</span>';
   } else {
-    pill.textContent='● IDLE';pill.classList.remove('run');
-    if(bs)bs.disabled=false;if(bst)bst.disabled=true;
-    if(ds)ds.textContent='System idle — configure the generator and start sniping.';
+    rp.textContent='● IDLE';rp.classList.remove('run');
+    if(!liveRunning)rp.style.display='';
+    if(bs)bs.disabled=liveRunning;if(bst)bst.disabled=true;
+  }
+
+  if(liveRunning){
+    lp.style.display='';
+    lc.classList.add('active');lc2.classList.add('active');
+    if(ldot)ldot.classList.add('on');if(ldot2)ldot2.classList.add('on');
+    if(bls)bls.disabled=true;if(blst)blst.disabled=false;
+    if(bls2)bls2.disabled=true;if(blst2)blst2.disabled=false;
+    if(bls)bls.classList.add('pulse');
+    if(bs)bs.disabled=true;
+    if(ds)ds.innerHTML='<span style="color:var(--live)">🔴 LIVE mode running — infinite snipe active...</span>';
+  } else {
+    lp.style.display='none';
+    lc.classList.remove('active');lc2.classList.remove('active');
+    if(ldot)ldot.classList.remove('on');if(ldot2)ldot2.classList.remove('on');
+    if(bls)bls.disabled=running;if(blst)blst.disabled=true;
+    if(bls2)bls2.disabled=running;if(blst2)blst2.disabled=true;
+    if(bls)bls.classList.remove('pulse');
+  }
+
+  if(!running&&!liveRunning){
+    if(ds)ds.textContent='System idle — use LIVE START for infinite snipe, or Generator for fixed amount.';
   }
 }
 
@@ -548,6 +664,35 @@ async function startGen(){
 
 async function stopGen(){await post('/api/stop');toast('Stopping...','info');}
 
+// ── LIVE MODE ─────────────────────────────────────────────────────────────────
+function getLiveLengths(suffix){
+  suffix=suffix||'';
+  const lengths=[];
+  if(document.getElementById('lcb4'+suffix).checked)lengths.push(4);
+  if(document.getElementById('lcb5'+suffix).checked)lengths.push(5);
+  if(document.getElementById('lcb6'+suffix).checked)lengths.push(6);
+  return lengths;
+}
+
+async function startLive(){
+  const lengths=getLiveLengths('');
+  if(!lengths.length){toast('Select at least one length','error');return;}
+  await post('/api/live/start',{lengths});
+  toast('LIVE mode started! 🔴 Running forever...','success');
+}
+
+async function startLive2(){
+  const lengths=getLiveLengths('b');
+  if(!lengths.length){toast('Select at least one length','error');return;}
+  await post('/api/live/start',{lengths});
+  toast('LIVE mode started! 🔴 Running forever...','success');
+}
+
+async function stopLive(){
+  await post('/api/live/stop');
+  toast('LIVE stopping...','info');
+}
+
 // ── CHECKER ───────────────────────────────────────────────────────────────────
 async function checkSingle(){
   const u=document.getElementById('cki').value.trim().toLowerCase();
@@ -561,7 +706,7 @@ async function checkSingle(){
     if(r.r==='valid'){res.className='cr valid';res.textContent='✅ VALID — @'+u+' is available!';}
     else if(r.r==='invalid'){res.className='cr invalid';res.textContent='❌ TAKEN — @'+u+' is already taken.';}
     else if(r.r==='rl'){res.className='cr rl';res.textContent='⚠️ Rate limited. Try again shortly.';}
-    else{res.className='cr rl';res.textContent='💀 Error — add proxies/tokens and retry.';}
+    else{res.className='cr rl';res.textContent='💀 Error — add proxies and retry.';}
     res.style.display='block';
   }catch{res.className='cr rl';res.textContent='💀 Connection error.';res.style.display='block';}
   btn.textContent='CHECK';btn.disabled=false;
@@ -575,7 +720,6 @@ async function addProxy(){
   document.getElementById('pxin').value='';
   await loadProxies();toast('Proxy added','success');
 }
-
 async function bulkProxy(){
   const data=document.getElementById('pxbulk').value;
   if(!data.trim())return;
@@ -583,25 +727,13 @@ async function bulkProxy(){
   document.getElementById('pxbulk').value='';
   await loadProxies();toast('Imported '+r.n+' proxies','success');
 }
-
 async function testProxies(){
-  await post('/api/proxies/test');
-  toast('Testing proxies in background...','info');
+  await post('/api/proxies/test');toast('Testing...','info');
   setTimeout(loadProxies,4000);setTimeout(loadProxies,10000);setTimeout(loadProxies,20000);
 }
-
-async function delDead(){
-  const r=await post('/api/proxies/del-dead');
-  await loadProxies();toast('Deleted '+r.deleted+' dead proxies','info');
-}
-
-async function clearProxies(){
-  if(!confirm('Clear all proxies?'))return;
-  await post('/api/proxies/clear');await loadProxies();toast('Cleared','info');
-}
-
+async function delDead(){const r=await post('/api/proxies/del-dead');await loadProxies();toast('Deleted '+r.deleted+' dead','info');}
+async function clearProxies(){if(!confirm('Clear all proxies?'))return;await post('/api/proxies/clear');await loadProxies();toast('Cleared','info');}
 async function delProxy(id){await post('/api/proxies/del',{id});await loadProxies();}
-
 async function loadProxies(){
   try{
     const r=await get('/api/proxies');
@@ -629,7 +761,6 @@ async function addToken(){
   document.getElementById('tkin').value='';
   await loadTokens();toast('Token added','success');
 }
-
 async function bulkTokens(){
   const data=document.getElementById('tkbulk').value;
   if(!data.trim())return;
@@ -637,19 +768,13 @@ async function bulkTokens(){
   document.getElementById('tkbulk').value='';
   await loadTokens();toast('Imported '+r.n+' tokens','success');
 }
-
 async function delToken(idx){await post('/api/tokens/del',{idx});await loadTokens();}
-
-async function clearTokens(){
-  if(!confirm('Clear all tokens?'))return;
-  await post('/api/tokens/clear');await loadTokens();toast('Cleared','info');
-}
-
+async function clearTokens(){if(!confirm('Clear all tokens?'))return;await post('/api/tokens/clear');await loadTokens();toast('Cleared','info');}
 async function loadTokens(){
   try{
     const r=await get('/api/tokens');
     const el=document.getElementById('tkl');
-    if(!r.tokens.length){el.innerHTML='<div class="empty">No tokens added. (Optional)</div>';return;}
+    if(!r.tokens.length){el.innerHTML='<div class="empty">No tokens. (Optional)</div>';return;}
     el.innerHTML=r.tokens.map((t,i)=>`
       <div class="tki">
         <div class="tkv">${esc(t)}</div>
@@ -663,12 +788,11 @@ function filterR(btn,l){
   document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');curFilter=l;loadResults();
 }
-
 async function loadResults(){
   try{
     const r=await get('/api/results'+(curFilter?'?l='+curFilter:''));
     const el=document.getElementById('rgrid');
-    if(!r.results.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">No valid usernames yet. Start the generator!</div>';return;}
+    if(!r.results.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">No valid usernames yet. Start the sniper!</div>';return;}
     el.innerHTML=r.results.map(u=>`
       <div class="rcard">
         <div class="ru">${esc(u.u)}</div>
@@ -680,7 +804,6 @@ async function loadResults(){
       </div>`).join('');
   }catch{}
 }
-
 async function delR(id){await post('/api/results/del',{id});await loadResults();}
 async function delAllR(){if(!confirm('Delete all valid usernames?'))return;await post('/api/results/del-all');await loadResults();toast('Cleared','info');}
 function exportR(){window.open('/api/results/export','_blank');}
@@ -710,7 +833,6 @@ async function loadLogs(){
     const w=document.getElementById('lw');w.scrollTop=w.scrollHeight;
   }catch{}
 }
-
 async function clearLogs(){
   await post('/api/logs/clear');
   document.getElementById('ll').innerHTML='<div class="empty">No logs yet.</div>';
