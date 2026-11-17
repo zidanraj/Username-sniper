@@ -17,12 +17,13 @@ _uid = [0]
 state = {
     'proxies': [], 'tokens': [], 'results': [], 'logs': [],
     'running': False, 'stop': False,
+    'live_running': False, 'live_stop': False,
     'stats': {'gen': 0, 'checked': 0, 'valid': 0, 'invalid': 0, 'rl': 0, 'err': 0},
     'config': {'lengths': [4], 'amount': 60},
+    'live_config': {'lengths': [4]},
     'webhook': '',
 }
 
-# ── EXACT SAME HEADERS AS WORKING BOT ─────────────────────────────────────────
 DISC_HDR = {
     'Content-Type': 'application/json',
     'User-Agent': (
@@ -30,21 +31,15 @@ DISC_HDR = {
         '(KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36'
     ),
 }
-
-# ── WORKING ENDPOINT (unauthed — no token needed) ─────────────────────────────
 DISC_URL = 'https://discord.com/api/v9/unique-username/username-attempt-unauthed'
 
-VALID_CHARS = string.ascii_lowercase + string.digits
-VOWELS      = 'aeiou'
-CONSONANTS  = 'bcdfghjklmnpqrstvwxyz'
+VOWELS     = 'aeiou'
+CONSONANTS = 'bcdfghjklmnpqrstvwxyz'
 
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 def addlog(lvl, msg):
     with lock:
-        state['logs'].append({
-            't': datetime.utcnow().strftime('%H:%M:%S'),
-            'l': lvl, 'm': msg
-        })
+        state['logs'].append({'t': datetime.utcnow().strftime('%H:%M:%S'), 'l': lvl, 'm': msg})
         if len(state['logs']) > 1000:
             state['logs'] = state['logs'][-500:]
 
@@ -58,22 +53,43 @@ def authed(f):
 
 def gen_name(lengths):
     l = random.choice(lengths)
-    # 3 styles just like the working bot
-    style = random.choice(['pronounceable', 'alpha', 'alnum'])
-    if style == 'pronounceable':
-        return ''.join(
-            random.choice(CONSONANTS if i % 2 == 0 else VOWELS)
-            for i in range(l)
-        )
-    if style == 'alpha':
-        return ''.join(random.choices(string.ascii_lowercase, k=l))
-    return ''.join(random.choices(VALID_CHARS, k=l))
+    if l == 4:
+        # 4-char: number-heavy combos are more available
+        # pure alpha 4-char are almost all taken
+        style = random.choice(['num_mix', 'num_heavy', 'alnum_rand', 'underscore_mid'])
+        if style == 'num_mix':
+            # 2 letters + 2 numbers shuffled
+            chars = random.sample(string.ascii_lowercase, 2) + random.sample(string.digits, 2)
+            random.shuffle(chars)
+            return ''.join(chars)
+        if style == 'num_heavy':
+            # 1 letter + 3 numbers or 3 letters + 1 number
+            if random.random() > 0.5:
+                chars = random.sample(string.ascii_lowercase, 1) + random.sample(string.digits, 3)
+            else:
+                chars = random.sample(string.ascii_lowercase, 3) + random.sample(string.digits, 1)
+            random.shuffle(chars)
+            return ''.join(chars)
+        if style == 'alnum_rand':
+            return ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+        if style == 'underscore_mid':
+            # x_x2 or x2_x pattern — mid underscore
+            a = random.choice(string.ascii_lowercase + string.digits)
+            b = random.choice(string.ascii_lowercase + string.digits)
+            c = random.choice(string.ascii_lowercase + string.digits)
+            return f'{a}_{b}{c}'
+    elif l == 5:
+        style = random.choice(['pronounceable', 'alpha', 'alnum'])
+        if style == 'pronounceable':
+            return ''.join(random.choice(CONSONANTS if i % 2 == 0 else VOWELS) for i in range(5))
+        if style == 'alpha':
+            return ''.join(random.choices(string.ascii_lowercase, k=5))
+        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=5))
+    else:
+        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=l))
 
 def disc_check(username, proxy=None):
-    """
-    POST to unauthed endpoint — 100% works without token.
-    Returns: 'valid' | 'invalid' | 'rl' | 'proxy_dead' | 'err'
-    """
+    """Returns (status, wait_seconds)"""
     px = {'http': proxy, 'https': proxy} if proxy else None
     try:
         r = requests.post(
@@ -84,16 +100,20 @@ def disc_check(username, proxy=None):
             timeout=14,
         )
         if r.status_code == 200:
-            data = r.json()
-            # taken=False means AVAILABLE
-            return 'valid' if data.get('taken') is False else 'invalid'
+            taken = r.json().get('taken', True)
+            return ('valid' if taken is False else 'invalid'), 0
         if r.status_code == 429:
-            return 'rl'
-        return 'err'
+            try:
+                wait = float(r.json().get('retry_after', 12))
+                wait = min(wait, 45)
+            except Exception:
+                wait = 12
+            return 'rl', wait
+        return 'err', 0
     except requests.exceptions.ProxyError:
-        return 'proxy_dead'
+        return 'proxy_dead', 0
     except Exception:
-        return 'err'
+        return 'err', 0
 
 def next_proxy():
     with lock:
@@ -124,20 +144,36 @@ def fire_webhook(username, length):
     except Exception:
         pass
 
-# ── WORKER ────────────────────────────────────────────────────────────────────
+def save_result(u, l):
+    with lock:
+        state['stats']['valid'] += 1
+        uid = _uid[0]; _uid[0] += 1
+        state['results'].append({
+            'id': uid, 'u': u, 'l': l,
+            't': datetime.utcnow().strftime('%H:%M:%S')
+        })
+    addlog('success', f'✅ VALID → {u} ({l} chars)')
+    fire_webhook(u, l)
+
+def sleep_interruptible(seconds, stop_key='stop'):
+    """Sleep but wake up early if stop flag set."""
+    for _ in range(int(seconds * 10)):
+        with lock:
+            if state[stop_key]:
+                return True  # interrupted
+        time.sleep(0.1)
+    return False
+
+# ── REGULAR WORKER ────────────────────────────────────────────────────────────
 def worker():
     addlog('info', '🚀 Sniper started')
     with lock:
         cfg = {**state['config']}
-        state['stats'] = {
-            'gen': 0, 'checked': 0, 'valid': 0,
-            'invalid': 0, 'rl': 0, 'err': 0
-        }
+        state['stats'] = {'gen': 0, 'checked': 0, 'valid': 0, 'invalid': 0, 'rl': 0, 'err': 0}
 
     lengths = cfg['lengths']
     amount  = cfg['amount']
 
-    # generate unique pool
     seen = set()
     pool = []
     while len(pool) < amount:
@@ -154,61 +190,54 @@ def worker():
     while idx < len(pool):
         with lock:
             if state['stop']:
-                addlog('warn', '⛔ Stopped by user')
+                addlog('warn', '⛔ Stopped')
                 break
             has_px = any(p['s'] == 'ok' for p in state['proxies'])
 
-        # proxies = 10 at a time, no proxy = 2 at a time (like working bot)
         batch_sz = 10 if has_px else 2
-        batch    = pool[idx:idx + batch_sz]
-        idx     += batch_sz
+        batch = pool[idx:idx + batch_sz]
+        idx  += batch_sz
 
         def check_one(u):
-            px  = next_proxy()
-            res = disc_check(u, proxy=px)
-            # double-check if valid (same as working bot)
+            px = next_proxy()
+            res, wait = disc_check(u, proxy=px)
             if res == 'valid':
-                res2 = disc_check(u, proxy=next_proxy())
+                res2, _ = disc_check(u, proxy=next_proxy())
                 if res2 != 'valid':
                     res = 'invalid'
-            return u, res, len(u), px
+            return u, res, wait, len(u), px
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=batch_sz) as ex:
             futs = {ex.submit(check_one, u): u for u in batch}
             for fut in concurrent.futures.as_completed(futs):
                 orig = futs[fut]
                 try:
-                    u, res, l, px = fut.result()
+                    u, res, wait, l, px = fut.result()
                 except Exception:
                     with lock:
                         state['stats']['err'] += 1
-                    addlog('error', f'💀 Thread err: {orig}')
                     continue
 
                 with lock:
                     state['stats']['checked'] += 1
 
                 if res == 'valid':
-                    with lock:
-                        state['stats']['valid'] += 1
-                        uid = _uid[0]; _uid[0] += 1
-                        state['results'].append({
-                            'id': uid, 'u': u, 'l': l,
-                            't': datetime.utcnow().strftime('%H:%M:%S')
-                        })
-                    addlog('success', f'✅ VALID → {u} ({l} chars)')
-                    fire_webhook(u, l)
+                    save_result(u, l)
 
                 elif res == 'invalid':
                     with lock:
                         state['stats']['invalid'] += 1
-                    addlog('info', f'❌ Taken: {u}')
 
                 elif res == 'rl':
                     with lock:
                         state['stats']['rl'] += 1
-                    addlog('warn', f'⚠️ Rate limited: {u} — retrying')
+                    wait = max(wait, 12)
+                    addlog('warn', f'⚠️ Rate limited — waiting {int(wait)}s')
+                    # actually sleep — this is the fix
+                    interrupted = sleep_interruptible(wait, 'stop')
                     pool.append(u)
+                    if interrupted:
+                        break
 
                 elif res == 'proxy_dead':
                     if px:
@@ -217,28 +246,102 @@ def worker():
                                 if p['ep'] == px:
                                     p['s'] = 'dead'
                     pool.append(u)
-                    addlog('error', f'💀 Proxy dead: {px}')
 
                 else:
                     with lock:
                         state['stats']['err'] += 1
-                    addlog('error', f'🔴 Error: {u}')
 
         with lock:
             if state['stop']:
                 break
             has_px_now = any(p['s'] == 'ok' for p in state['proxies'])
 
-        # delay between batches — like working bot (0.6s no proxy, 0.05s with proxy)
-        delay = 0.05 if has_px_now else 0.6
-        time.sleep(delay)
+        time.sleep(0.05 if has_px_now else 0.6)
 
     with lock:
         state['running'] = False
         state['stop']    = False
         v = state['stats']['valid']
         c = state['stats']['checked']
-    addlog('success', f'🏁 Done! {c} checked → {v} valid found')
+    addlog('success', f'🏁 Done! {c} checked → {v} valid')
+
+# ── LIVE WORKER ───────────────────────────────────────────────────────────────
+def live_worker():
+    addlog('info', '🔴 LIVE mode started — infinite snipe until you stop')
+    with lock:
+        lengths = list(state['live_config']['lengths'])
+
+    seen = set()
+    checked = 0
+    rl_streak = 0
+
+    while True:
+        with lock:
+            if state['live_stop']:
+                addlog('warn', '⛔ LIVE stopped')
+                state['live_running'] = False
+                state['live_stop']    = False
+                break
+
+        u = gen_name(lengths)
+        if u in seen:
+            continue
+        seen.add(u)
+
+        # clear seen periodically to avoid memory bloat
+        if len(seen) > 50000:
+            seen = set(list(seen)[-10000:])
+
+        px = next_proxy()
+        res, wait = disc_check(u, proxy=px)
+        checked += 1
+
+        with lock:
+            state['stats']['checked'] += 1
+
+        if res == 'valid':
+            # double confirm
+            res2, _ = disc_check(u, proxy=next_proxy())
+            if res2 == 'valid':
+                save_result(u, len(u))
+                rl_streak = 0
+
+        elif res == 'invalid':
+            with lock:
+                state['stats']['invalid'] += 1
+            rl_streak = 0
+            with lock:
+                has_px = any(p['s'] == 'ok' for p in state['proxies'])
+            time.sleep(0.05 if has_px else 0.5)
+
+        elif res == 'rl':
+            with lock:
+                state['stats']['rl'] += 1
+            rl_streak += 1
+            # progressive wait — longer if keeps hitting rl
+            actual_wait = max(wait, 10 + min(rl_streak * 3, 25))
+            addlog('warn', f'⚠️ Rate limited (x{rl_streak}) — waiting {int(actual_wait)}s')
+            interrupted = sleep_interruptible(actual_wait, 'live_stop')
+            if interrupted:
+                with lock:
+                    state['live_running'] = False
+                    state['live_stop']    = False
+                addlog('warn', '⛔ LIVE stopped during RL wait')
+                break
+
+        elif res == 'proxy_dead':
+            if px:
+                with lock:
+                    for p in state['proxies']:
+                        if p['ep'] == px:
+                            p['s'] = 'dead'
+            addlog('error', f'💀 Proxy dead: {px}')
+
+        else:
+            with lock:
+                state['stats']['err'] += 1
+
+    addlog('success', f'🏁 LIVE ended — {checked} checked, {state["stats"]["valid"]} valid total')
 
 # ── ROUTES ────────────────────────────────────────────────────────────────────
 @app.route('/')
@@ -262,7 +365,7 @@ def api_logout():
 @authed
 def api_start():
     with lock:
-        if state['running']:
+        if state['running'] or state['live_running']:
             return jsonify({'error': 'already running'}), 400
         d = request.json or {}
         state['config']['lengths'] = d.get('lengths', [4])
@@ -279,11 +382,35 @@ def api_stop():
         state['stop'] = True
     return jsonify({'ok': True})
 
+@app.route('/api/live/start', methods=['POST'])
+@authed
+def api_live_start():
+    with lock:
+        if state['running'] or state['live_running']:
+            return jsonify({'error': 'already running'}), 400
+        d = request.json or {}
+        state['live_config']['lengths'] = d.get('lengths', [4])
+        state['live_stop']    = False
+        state['live_running'] = True
+    threading.Thread(target=live_worker, daemon=True).start()
+    return jsonify({'ok': True})
+
+@app.route('/api/live/stop', methods=['POST'])
+@authed
+def api_live_stop():
+    with lock:
+        state['live_stop'] = True
+    return jsonify({'ok': True})
+
 @app.route('/api/status')
 @authed
 def api_status():
     with lock:
-        return jsonify({'running': state['running'], 'stats': {**state['stats']}})
+        return jsonify({
+            'running':      state['running'],
+            'live_running': state['live_running'],
+            'stats':        {**state['stats']},
+        })
 
 @app.route('/api/check-single', methods=['POST'])
 @authed
@@ -291,11 +418,10 @@ def api_check():
     u = (request.json or {}).get('username', '').strip().lower()
     if not u or len(u) < 2 or len(u) > 32:
         return jsonify({'r': 'invalid_format'})
-    r = disc_check(u, proxy=next_proxy())
+    r, _ = disc_check(u, proxy=next_proxy())
     addlog('info', f'🔍 Manual: {u} → {r}')
     return jsonify({'r': r, 'u': u})
 
-# proxies
 @app.route('/api/proxies')
 @authed
 def api_proxies_get():
@@ -383,12 +509,11 @@ def api_proxies_clear():
         state['proxies'] = []
     return jsonify({'ok': True})
 
-# tokens (kept for compatibility but not needed anymore)
 @app.route('/api/tokens')
 @authed
 def api_tokens_get():
     with lock:
-        return jsonify({'tokens': [t[:22] + '...' for t in state['tokens']], 'count': len(state['tokens'])})
+        return jsonify({'tokens': [t[:22]+'...' for t in state['tokens']], 'count': len(state['tokens'])})
 
 @app.route('/api/tokens/add', methods=['POST'])
 @authed
@@ -430,7 +555,6 @@ def api_tokens_clear():
         state['tokens'] = []
     return jsonify({'ok': True})
 
-# results
 @app.route('/api/results')
 @authed
 def api_results():
@@ -466,7 +590,6 @@ def api_results_export():
     return send_file(buf, as_attachment=True,
                      download_name='z3nith_valid.txt', mimetype='text/plain')
 
-# webhook
 @app.route('/api/webhook', methods=['GET', 'POST'])
 @authed
 def api_webhook():
@@ -483,7 +606,6 @@ def api_webhook_test():
     fire_webhook('z3nith_test', 4)
     return jsonify({'ok': True})
 
-# logs
 @app.route('/api/logs')
 @authed
 def api_logs():
